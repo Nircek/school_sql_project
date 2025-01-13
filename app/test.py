@@ -4,11 +4,13 @@ to the server and compare the response to the expected value. The tests are run 
 the unittest library.
 """
 
+from sys import argv
 from unittest import TestCase
 import requests
 
 tc = TestCase()
-ROOT_URL = "http://localhost:8000"
+PORT = argv[1] if len(argv) > 1 else "8000"
+ROOT_URL = f"http://localhost:{PORT}"
 
 
 def assert_equal(a, b, msg=None):
