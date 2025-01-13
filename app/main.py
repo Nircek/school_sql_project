@@ -1,6 +1,16 @@
 """
 System zarządzania szkołą
 =========================
+
+Development steps:
+```bash
+# Run the application
+virtualenv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+docker compose up
+python3 test.py
+```
 """
 
 import sys
@@ -8,7 +18,7 @@ import sys
 if __name__ == "__main__" and __spec__ is None:
     print(
         "Ta aplikacja musi zostać uruchomiona przez "
-        "`uvicorn main:APP --host 0.0.0.0 --port 8000`",
+        "`uvicorn main:APP --host 0.0.0.0 --port 8000 --env-file .env`",
         file=sys.stderr,
     )
     sys.exit(1)
@@ -16,6 +26,7 @@ if __name__ == "__main__" and __spec__ is None:
 # flake8: noqa:
 # pylint: disable=C0413
 import traceback
+import os
 from fastapi import FastAPI, Response, Request
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -24,7 +35,11 @@ import psycopg2
 DB, DB_ERR = None, None
 try:
     DB = psycopg2.connect(
-        dbname="mydb", user="user", password="password", host="postgres", port="5432"
+        host=os.getenv("DB_HOST"),
+        port=os.getenv("DB_PORT"),
+        user=os.getenv("DB_USER"),
+        password=os.getenv("DB_PASS"),
+        dbname=os.getenv("DB_NAME"),
     )
 except Exception as e:  # pylint: disable=W0718
     DB_ERR = str(e)
