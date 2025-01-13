@@ -1,0 +1,10 @@
+{
+    "flake8.args": [
+        "--max-line-length=88"
+    ],
+    "black-formatter.args": [
+        "--preview",
+        "--enable-unstable-feature",
+        "string_processing"
+    ]
+}

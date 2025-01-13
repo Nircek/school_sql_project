@@ -1,0 +1,42 @@
+services:
+  postgres:
+    image: postgres:16.4-alpine
+    container_name: postgres
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: mydb
+      PGDATA: /home/postgres/data/pgdata
+    ports:
+      - 5432:5432
+    volumes: # https://github.com/docker-library/postgres/issues/476#issuecomment-979298145
+      - ./postgres_data:/home/postgres
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@example.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - 5050:80
+    links:
+      - postgres
+    depends_on:
+      - postgres
+
+  fastapi:
+    image: python:3.11-slim
+    container_name: fastapi
+    working_dir: /app
+    volumes:
+      - ./app:/app
+    command: >
+      sh -c "pip install fastapi uvicorn[standard] psycopg2-binary &&
+             uvicorn main:APP --host 0.0.0.0 --port 8000 --reload"
+    ports:
+      - 8000:8000
+    links:
+      - postgres
+    depends_on:
+      - postgres
