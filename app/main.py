@@ -29,17 +29,14 @@ import traceback
 import os
 from pathlib import Path
 
-from fastapi import FastAPI, Response, Request
+from fastapi import FastAPI, Response, Request, status as fastapi_status
 from fastapi.responses import JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 import psycopg
 
 
-APP = FastAPI(title="System zarządzania szkołą")
-API_APP = FastAPI(title="System zarządzania szkołą - API")
 SQL_FOLDER = Path("sql")
-APP.db = None  # https://github.com/fastapi/fastapi/issues/592
-APP.db_state = None  # True if the database is initialized
+assert SQL_FOLDER.is_dir(), f"Folder {SQL_FOLDER} does not exist"
 
 
 def get_sql_commands(file, cmd=None):
@@ -50,10 +47,11 @@ def get_sql_commands(file, cmd=None):
     return list([f"{x};" for x in sql.strip().split(";") if x])
 
 
-def init():
+def init_db():
     """Initialize the application"""
-    assert SQL_FOLDER.is_dir(), f"Folder {SQL_FOLDER} does not exist"
     try:
+        if APP.db is not None:
+            APP.db.close()
         APP.db = psycopg.connect(
             f'host={os.getenv("DB_HOST")} port={os.getenv("DB_PORT")} user={os.getenv("DB_USER")}'
             f' password={os.getenv("DB_PASS")} dbname={os.getenv("DB_NAME")}'
@@ -64,11 +62,14 @@ def init():
     except Exception as e:  # pylint: disable=W0718
         APP.db_state = str(e)
 
-    APP.mount("/api", API_APP)
-    APP.mount("/", StaticFiles(directory="static", html=True), name="static")
 
-
-init()
+APP = FastAPI(title="System zarządzania szkołą")
+API_APP = FastAPI(title="System zarządzania szkołą - API")
+APP.db = None  # https://github.com/fastapi/fastapi/issues/592
+APP.db_state = None  # True if the database is initialized
+init_db()
+APP.mount("/api", API_APP)
+APP.mount("/", StaticFiles(directory="static", html=True), name="static")
 
 
 @API_APP.exception_handler(Exception)
@@ -88,10 +89,11 @@ async def db_middleware(request: Request, call_next):
         )
     if request.scope["path"] == "/setup_db.html":
         if request.method == "POST":
-            request.scope["path"] = "/api/debug/sql_init"
+            request.scope["path"] = "/api/debug/db_init"
     elif not APP.db_state:
-        return RedirectResponse(url="/setup_db.html")
-    print(APP.db_state, request.scope["path"], file=sys.stderr)
+        return RedirectResponse(
+            url="/setup_db.html", status_code=fastapi_status.HTTP_303_SEE_OTHER
+        )
 
     response = await call_next(request)
     return response
@@ -127,13 +129,23 @@ def debug_error():
     raise Exception("Test error")  # pylint: disable=W0719
 
 
-@API_APP.post("/debug/sql_init")
+@API_APP.post("/debug/db_init")
 def debug_sql_init():
     """Initialize the database"""
     with APP.db.cursor() as cursor:
         for sql in get_sql_commands("init.sql"):
             cursor.execute(sql)
-            print(sql, file=sys.stderr)
         APP.db.commit()
     APP.db_state = True
+    return {"status": "ok"}
+
+
+@API_APP.post("/debug/db_drop")
+def debug_sql_drop():
+    """Drop the database"""
+    with APP.db.cursor() as cursor:
+        for sql in get_sql_commands("drop.sql"):
+            cursor.execute(sql)
+        APP.db.commit()
+    init_db()
     return {"status": "ok"}

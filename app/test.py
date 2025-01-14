@@ -31,23 +31,41 @@ def assert_response(path, expected, method="GET", msg=None):
     assert_equal(response.json(), expected, msg)
 
 
-assert_response(
-    "/api/debug/hello",
-    {"Hello": "World"},
-    msg=f"Debug Hello World (504 = DB error) {ROOT_URL}/api/debug/hello",
-)
-assert_response(
-    "/api/debug/db",
-    {"db_test": [1]},
-    msg=f"Debug DB connection {ROOT_URL}/api/debug/db",
-)
-assert_equal(
-    url("/api/debug/error").text.rsplit("\n", 2)[-2],
-    "Exception: Test error",
-    msg=f"Debug error middleware {ROOT_URL}/api/debug/error",
-)
-assert_equal(
-    url("/").text.split("\n", 1)[0], "<!DOCTYPE html>", msg=f"Static files {ROOT_URL}/"
-)
+def test():
+    """Run the tests"""
+    url("/api/debug/db_drop", "POST")
+    response = url("/")
+    assert "/setup_db.html" in response.url
+    assert (
+        response.text.find("'/setup_db.html', { method: 'POST' }") != -1
+    ), response.text
+    url("/setup_db.html", "POST")
+    response = url("/")
+    assert (
+        response.text.find("'/setup_db.html', { method: 'POST' }") == -1
+    ), response.text
 
+    assert_response(
+        "/api/debug/hello",
+        {"Hello": "World"},
+        msg=f"Debug Hello World (504 = DB error) {ROOT_URL}/api/debug/hello",
+    )
+    assert_response(
+        "/api/debug/db",
+        {"db_test": [1]},
+        msg=f"Debug DB connection {ROOT_URL}/api/debug/db",
+    )
+    assert_equal(
+        url("/api/debug/error").text.rsplit("\n", 2)[-2],
+        "Exception: Test error",
+        msg=f"Debug error middleware {ROOT_URL}/api/debug/error",
+    )
+    assert_equal(
+        url("/").text.split("\n", 1)[0],
+        "<!DOCTYPE html>",
+        msg=f"Static files {ROOT_URL}/",
+    )
+
+
+test()
 print("All tests passed.")

@@ -1,0 +1,1 @@
+DROP SCHEMA "projekt" CASCADE;
