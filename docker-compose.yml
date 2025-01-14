@@ -24,6 +24,11 @@ services:
       - postgres
     depends_on:
       - postgres
+    volumes:
+      - ./pgadmin_data:/var/lib/pgadmin
+      # sudo docker exec -it pgadmin sh -c id
+      # sudo chown 5050:5050 pgadmin_data/
+
 
   fastapi:
     build: .

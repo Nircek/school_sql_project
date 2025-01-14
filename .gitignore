@@ -1,5 +1,6 @@
 .timetracker
 postgres_data
+pgadmin_data
 .env
 
 # Byte-compiled / optimized / DLL files

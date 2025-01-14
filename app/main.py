@@ -9,7 +9,7 @@ virtualenv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 docker compose up
-python3 test.py
+python3 app/test.py
 ```
 """
 
@@ -27,27 +27,48 @@ if __name__ == "__main__" and __spec__ is None:
 # pylint: disable=C0413
 import traceback
 import os
-from fastapi import FastAPI, Response, Request
-from fastapi.responses import JSONResponse
-from fastapi.staticfiles import StaticFiles
-import psycopg2
+from pathlib import Path
 
-DB, DB_ERR = None, None
-try:
-    DB = psycopg2.connect(
-        host=os.getenv("DB_HOST"),
-        port=os.getenv("DB_PORT"),
-        user=os.getenv("DB_USER"),
-        password=os.getenv("DB_PASS"),
-        dbname=os.getenv("DB_NAME"),
-    )
-except Exception as e:  # pylint: disable=W0718
-    DB_ERR = str(e)
+from fastapi import FastAPI, Response, Request
+from fastapi.responses import JSONResponse, RedirectResponse
+from fastapi.staticfiles import StaticFiles
+import psycopg
+
 
 APP = FastAPI(title="System zarządzania szkołą")
 API_APP = FastAPI(title="System zarządzania szkołą - API")
-APP.mount("/api", API_APP)
-APP.mount("/", StaticFiles(directory="static", html=True), name="static")
+SQL_FOLDER = Path("sql")
+APP.db = None  # https://github.com/fastapi/fastapi/issues/592
+APP.db_state = None  # True if the database is initialized
+
+
+def get_sql_commands(file, cmd=None):
+    """Read SQL commands from a file"""
+    # TODO: Implement cmd argument
+    with open(SQL_FOLDER / file, encoding="utf-8") as f:
+        sql = f.read()
+    return list([f"{x};" for x in sql.strip().split(";") if x])
+
+
+def init():
+    """Initialize the application"""
+    assert SQL_FOLDER.is_dir(), f"Folder {SQL_FOLDER} does not exist"
+    try:
+        APP.db = psycopg.connect(
+            f'host={os.getenv("DB_HOST")} port={os.getenv("DB_PORT")} user={os.getenv("DB_USER")}'
+            f' password={os.getenv("DB_PASS")} dbname={os.getenv("DB_NAME")}'
+        )
+        with APP.db.cursor() as cursor:
+            cursor.execute(get_sql_commands("check_schema.sql")[0])
+            APP.db_state = cursor.fetchone() is not None
+    except Exception as e:  # pylint: disable=W0718
+        APP.db_state = str(e)
+
+    APP.mount("/api", API_APP)
+    APP.mount("/", StaticFiles(directory="static", html=True), name="static")
+
+
+init()
 
 
 @API_APP.exception_handler(Exception)
@@ -60,11 +81,18 @@ async def debug_exception_handler(_: Request, exc: Exception):
 
 @APP.middleware("http")
 async def db_middleware(request: Request, call_next):
-    """Return a 503 error if the database connection failed"""
-    if DB is None:
+    """Return a 503 error if the database connection failed and redirect to setup_db if needed"""
+    if APP.db is None:
         return JSONResponse(
-            status_code=503, content={"type": "db_error", "error": DB_ERR}
+            status_code=503, content={"type": "db_error", "error": APP.db_state}
         )
+    if request.scope["path"] == "/setup_db.html":
+        if request.method == "POST":
+            request.scope["path"] = "/api/debug/sql_init"
+    elif not APP.db_state:
+        return RedirectResponse(url="/setup_db.html")
+    print(APP.db_state, request.scope["path"], file=sys.stderr)
+
     response = await call_next(request)
     return response
 
@@ -85,7 +113,7 @@ def debug_hello():
 def debug_db():
     """Test the database connection"""
     try:
-        with DB.cursor() as cursor:
+        with APP.db.cursor() as cursor:
             cursor.execute("SELECT 1")
             result = cursor.fetchone()
             return {"db_test": result}
@@ -97,3 +125,15 @@ def debug_db():
 def debug_error():
     """Raise an exception to test the exception handler in middleware"""
     raise Exception("Test error")  # pylint: disable=W0719
+
+
+@API_APP.post("/debug/sql_init")
+def debug_sql_init():
+    """Initialize the database"""
+    with APP.db.cursor() as cursor:
+        for sql in get_sql_commands("init.sql"):
+            cursor.execute(sql)
+            print(sql, file=sys.stderr)
+        APP.db.commit()
+    APP.db_state = True
+    return {"status": "ok"}
