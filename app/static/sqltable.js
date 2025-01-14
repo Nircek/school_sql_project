@@ -4,11 +4,11 @@ function isSetsEqual(a, b) {
   return a.size === b.size && a.isSubsetOf(b);
 }
 
-class Table {
-  constructor(name, columns) {
+class SQLTable {
+  constructor(name, columns, index = null) {
     this.name = name;
     this.columns = columns;
-    this.index = `${name}_id`;
+    this.index = index === null ? `${name}_id` : index;
     this.tableElement = document.createElement("table");
     this.addElement = document.createElement("tr");
   }
@@ -150,19 +150,52 @@ class Table {
   }
 }
 
-document.addEventListener("DOMContentLoaded", async () => {
-  document
-    .getElementById("table_name")
-    .addEventListener("change", async (event) => {
-      const container = document.getElementById("table_container");
-      const table = new Table(event.target.value, [
-        "nauczyciel_id",
-        "imie",
-        "nazwisko",
-      ]);
-      container.replaceChildren();
-      container.appendChild(table.tableElement);
-      await table.refresh();
-    });
-  document.getElementById("table_name").dispatchEvent(new Event("change"));
-});
+const table_to_columns = {
+  nauczyciel: ["nauczyciel_id", "imie", "nazwisko"],
+  klasa: ["klasa_id", "nazwa", "wychowawca"],
+  uczen: ["uczen_id", "imie", "nazwisko", "klasa_id"],
+  sala: ["sala_id", "nazwa"],
+  semestr: ["semestr_id", "data_poczatku", "data_konca"],
+  zajecia: [
+    "zajecia_id",
+    "sala_id",
+    "klasa_id",
+    "nauczyciel_id",
+    "semestr_id",
+    "dzien",
+    "czas_rozp",
+    "czas_konc",
+  ],
+  frekwencja: ["zajecia_id", "data", "uczen_id", "obecnosc"],
+  platnosc: [
+    "platnosc_id",
+    "klasa_id",
+    "tytul",
+    "opis",
+    "kwota",
+    "termin",
+    "kategoria",
+  ],
+  zaplata: ["platnosc_id", "uczen_id", "kwota"],
+};
+
+const table_to_index = {
+  nauczyciel: null,
+  klasa: null,
+  uczen: null,
+  sala: null,
+  semestr: null,
+  zajecia: null,
+  frekwencja: undefined,
+  platnosc: null,
+  zaplata: undefined,
+};
+
+function generateOptions() {
+  return Object.keys(table_to_columns).map((table_name) => {
+    const option = document.createElement("option");
+    option.value = table_name;
+    option.textContent = table_name;
+    return option;
+  });
+}

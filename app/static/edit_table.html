@@ -1,39 +1,55 @@
 <!DOCTYPE html>
 <html lang="en">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Edit table</title>
     <style>
-        table {
-            border-collapse: collapse;
-        }
+      table {
+        border-collapse: collapse;
+      }
 
-        th,
-        td {
-            border: 1px solid black;
-            padding: 8px;
-            text-align: left;
-        }
+      th,
+      td {
+        border: 1px solid black;
+        padding: 8px;
+        text-align: left;
+      }
 
-        th {
-            background-color: #f2f2f2;
-        }
+      th {
+        background-color: #f2f2f2;
+      }
     </style>
-    <script src="edit_table.js"></script>
-</head>
+    <script src="sqltable.js"></script>
+    <script>
+      document.addEventListener("DOMContentLoaded", async () => {
+        const table_name = document.getElementById("table_name");
+        table_name.replaceChildren(...generateOptions());
+        table_name.addEventListener("change", async (event) => {
+          const container = document.getElementById("table_container");
+          const table = new SQLTable(
+            event.target.value,
+            table_to_columns[event.target.value],
+            table_to_index[event.target.value]
+          );
+          container.replaceChildren();
+          container.appendChild(table.tableElement);
+          await table.refresh();
+        });
+        table_name.dispatchEvent(new Event("change"));
+        table_name.focus();
+      });
+    </script>
+  </head>
 
-<body>
+  <body>
     <h1>Edit table</h1>
-    Select table: <select id="table_name">
-        <option value="nauczyciel">nauczyciel</option>
+    Select table:
+    <select id="table_name">
+      <option value="nauczyciel">nauczyciel</option>
     </select>
-    <br>
-    <br>
-    <div id="table_container">
-    </div>
-
-</body>
-
+    <br />
+    <br />
+    <div id="table_container"></div>
+  </body>
 </html>

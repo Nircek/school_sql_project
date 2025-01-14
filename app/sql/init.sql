@@ -62,6 +62,7 @@ CREATE TABLE "zajecia"
 CREATE TABLE "frekwencja"
 (
     "zajecia_id" serial REFERENCES "zajecia",
+    "data"       date NOT NULL,
     "uczen_id"   serial REFERENCES "uczen",
     "obecnosc"   obecnosc NOT NULL,
     PRIMARY KEY ("zajecia_id", "uczen_id")
@@ -86,4 +87,5 @@ CREATE TABLE "zaplata"
     PRIMARY KEY ("platnosc_id", "uczen_id")
 );
 
-
+-- CHANGELOG:
+-- - dodana "frekwencja"."data"
