@@ -18,22 +18,25 @@ def assert_equal(a, b, msg=None):
     tc.assertEqual(a, b, msg)
 
 
-def url(path, method="GET"):
+def url(path, method="GET", data=None, err=False):
     """Make a request to the server"""
-    response = requests.request(method, f"{ROOT_URL}{path}", timeout=2)
-    response.raise_for_status()
+    response = requests.request(method, f"{ROOT_URL}{path}", json=data, timeout=2)
+    if not err:
+        if response.status_code == 500:
+            print(response.text)
+        response.raise_for_status()
     return response
 
 
-def assert_response(path, expected, method="GET", msg=None):
+def assert_response(path, expected, method="GET", data=None, msg=None):
     """Make a request to the server and compare the response to the expected value"""
-    response = url(path, method)
+    response = url(path, method, data)
     assert_equal(response.json(), expected, msg)
 
 
 def test():
     """Run the tests"""
-    url("/api/debug/db_drop", "POST")
+    response = url("/api/debug/db_drop", "POST")
     response = url("/")
     assert "/setup_db.html" in response.url
     assert (
@@ -52,11 +55,11 @@ def test():
     )
     assert_response(
         "/api/debug/db",
-        {"db_test": [1]},
+        {"db_test": 1},
         msg=f"Debug DB connection {ROOT_URL}/api/debug/db",
     )
     assert_equal(
-        url("/api/debug/error").text.rsplit("\n", 2)[-2],
+        url("/api/debug/error", err=True).text.rsplit("\n", 2)[-2],
         "Exception: Test error",
         msg=f"Debug error middleware {ROOT_URL}/api/debug/error",
     )
@@ -64,6 +67,22 @@ def test():
         url("/").text.split("\n", 1)[0],
         "<!DOCTYPE html>",
         msg=f"Static files {ROOT_URL}/",
+    )
+    assert_response(
+        "/api/db/nauczyciel",
+        [],
+        msg="GET nauczyciel {ROOT_URL}/api/db/nauczyciel",
+    )
+    assert url("/api/db/nauczyciel", "POST", {"imie": "Jan", "nazwisko": "Kowalski"}).ok
+    assert_response(
+        "/api/db/nauczyciel",
+        [{"nauczyciel_id": 1, "imie": "Jan", "nazwisko": "Kowalski"}],
+        msg="GET nauczyciel {ROOT_URL}/api/db/nauczyciel",
+    )
+    assert_response(
+        "/api/db/nauczyciel/1",
+        {"nauczyciel_id": 1, "imie": "Jan", "nazwisko": "Kowalski"},
+        msg="GET nauczyciel/1 {ROOT_URL}/api/db/nauczyciel/1",
     )
 
 

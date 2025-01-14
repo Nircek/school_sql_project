@@ -8,3 +8,7 @@ WHERE
 
 --- drop schema
 DROP SCHEMA "projekt" CASCADE;
+
+--- select schema
+SET
+    search_path TO projekt;
