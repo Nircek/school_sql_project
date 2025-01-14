@@ -84,6 +84,18 @@ def test():
         {"nauczyciel_id": 1, "imie": "Jan", "nazwisko": "Kowalski"},
         msg="GET nauczyciel/1 {ROOT_URL}/api/db/nauczyciel/1",
     )
+    assert url("/api/db/nauczyciel/1", "PUT", {"nazwisko": "Nowak"}).ok
+    assert_response(
+        "/api/db/nauczyciel/1",
+        {"nauczyciel_id": 1, "imie": "Jan", "nazwisko": "Nowak"},
+        msg="GET nauczyciel/1 {ROOT_URL}/api/db/nauczyciel/1",
+    )
+    assert url("/api/db/nauczyciel/1", "DELETE").ok
+    assert_response(
+        "/api/db/nauczyciel",
+        [],
+        msg="GET nauczyciel {ROOT_URL}/api/db/nauczyciel",
+    )
 
 
 test()

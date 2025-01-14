@@ -230,3 +230,40 @@ async def post_table(table: str, request: Request):
             )
         )
         APP.db.commit()
+
+
+@API_APP.put("/db/{table}/{entity}")
+async def put_table_entity(table: str, entity: int, request: Request):
+    """Update a row in a table by ID"""
+    if table not in APP.db_tables:
+        return table_not_found(table)
+    data = await request.json()
+    keys = list(data.keys())
+    values = list([data[k] for k in keys])
+    with APP.db.cursor() as cursor:
+        cursor.execute(
+            sql.SQL("UPDATE {} SET {} WHERE {} = %s;").format(
+                sql.Identifier(table),
+                sql.SQL(", ").join(
+                    sql.SQL("{} = %s").format(sql.Identifier(k)) for k in keys
+                ),
+                sql.Identifier(f"{table}_id"),
+            ),
+            [*values, entity],
+        )
+        APP.db.commit()
+
+
+@API_APP.delete("/db/{table}/{entity}")
+def delete_table_entity(table: str, entity: int):
+    """Delete a row from a table by ID"""
+    if table not in APP.db_tables:
+        return table_not_found(table)
+    with APP.db.cursor() as cursor:
+        cursor.execute(
+            sql.SQL("DELETE FROM {} WHERE {} = %s").format(
+                sql.Identifier(table), sql.Identifier(f"{table}_id")
+            ),
+            [entity],
+        )
+        APP.db.commit()
