@@ -28,6 +28,7 @@ if __name__ == "__main__" and __spec__ is None:
 import traceback
 import os
 from pathlib import Path
+import re
 
 from fastapi import FastAPI, Response, Request, status as fastapi_status
 from fastapi.responses import JSONResponse, RedirectResponse
@@ -41,10 +42,14 @@ assert SQL_FOLDER.is_dir(), f"Folder {SQL_FOLDER} does not exist"
 
 def get_sql_commands(file, cmd=None):
     """Read SQL commands from a file"""
-    # TODO: Implement cmd argument
     with open(SQL_FOLDER / file, encoding="utf-8") as f:
         sql = f.read()
-    return list([f"{x};" for x in sql.strip().split(";") if x])
+    if cmd is None:
+        return list([f"{x};" for x in sql.strip().split(";") if x])
+    regex = re.compile(rf"(?:^|\n)---\s*{cmd}\s*([\s\S]*?)(?:\n---|$)")
+    m = regex.search(sql)
+    assert m, f"Command {cmd} not found in {file}"
+    return list([f"{x};" for x in m.group(1).strip().split(";") if x])
 
 
 def init_db():
@@ -57,7 +62,7 @@ def init_db():
             f' password={os.getenv("DB_PASS")} dbname={os.getenv("DB_NAME")}'
         )
         with APP.db.cursor() as cursor:
-            cursor.execute(get_sql_commands("check_schema.sql")[0])
+            cursor.execute(get_sql_commands("utils.sql", "check schema")[0])
             APP.db_state = cursor.fetchone() is not None
     except Exception as e:  # pylint: disable=W0718
         APP.db_state = str(e)
@@ -144,7 +149,7 @@ def debug_sql_init():
 def debug_sql_drop():
     """Drop the database"""
     with APP.db.cursor() as cursor:
-        for sql in get_sql_commands("drop.sql"):
+        for sql in get_sql_commands("utils.sql", "drop schema"):
             cursor.execute(sql)
         APP.db.commit()
     init_db()
