@@ -21,107 +21,18 @@
             background-color: #f2f2f2;
         }
     </style>
-    <script>
-        let id_column = '';
-        document.addEventListener('DOMContentLoaded', async () => {
-            document.getElementById('table').addEventListener('change', async (event) => {
-                const table = event.target.value;
-                const response = await fetch(`/api/db/${table}`);
-                id_column = `${table}_id`;
-                const data = await response.json();
-                if (data.length === 0) {
-                    document.getElementById('data').innerHTML = 'No data';
-                    return;
-                }
-                const keys = Object.keys(data[0]);
-                const tableElement = document.createElement('table');
-                const thead = document.createElement('thead');
-                const tbody = document.createElement('tbody');
-                const tr = document.createElement('tr');
-                keys.forEach(key => {
-                    const th = document.createElement('th');
-                    th.textContent = key;
-                    tr.appendChild(th);
-                });
-                const action = document.createElement('th');
-                action.innerHTML = "<small>akcja</small>";
-                tr.appendChild(action);
-                thead.appendChild(tr);
-                data.forEach(row => {
-                    const tr = document.createElement('tr');
-                    keys.forEach(key => {
-                        const td = document.createElement('td');
-                        td.textContent = row[key];
-                        tr.appendChild(td);
-                    });
-                    const td = document.createElement('td');
-                    td.innerHTML = `<button onclick='deleteRow(${row[id_column]})'>&#x2716;</button>`;
-                    tr.appendChild(td);
-                    tbody.appendChild(tr);
-                });
-                const trAdd = document.createElement('tr');
-                trAdd.setAttribute('id', 'add');
-                keys.forEach(key => {
-                    const td = document.createElement('td');
-                    if (key === id_column) {
-                        td.innerHTML = `<input type="text" disabled>`;
-                    } else {
-                        td.innerHTML = `<input type="text">`;
-                    }
-                    trAdd.appendChild(td);
-                });
-                const td = document.createElement('td');
-                td.innerHTML = `<button onclick='addRow()'>&#x2795;</button>`;
-                trAdd.appendChild(td);
-                tbody.appendChild(trAdd);
-                tableElement.appendChild(thead);
-                tableElement.appendChild(tbody);
-                document.getElementById('data').innerHTML = '';
-                document.getElementById('data').appendChild(tableElement);
-            });
-            document.getElementById('table').dispatchEvent(new Event('change'));
-        });
-
-        async function deleteRow(id) {
-            const table = document.getElementById('table').value;
-            const response = await fetch(`/api/db/${table}/${id}`, { method: 'DELETE' });
-            document.getElementById('table').dispatchEvent(new Event('change'));
-        }
-
-        async function addRow() {
-            const table = document.getElementById('table').value;
-            const keys = Array.from(document.getElementById('data').querySelector('thead').querySelectorAll('th')).filter(
-                th => th.textContent !== 'akcja' && th.textContent !== id_column
-            ).map(th => th.textContent);
-            const data = Array.from(document.getElementById('add').querySelectorAll('input')).filter(
-                input => input.disabled === false
-            ).map(input => input.value);
-            const body = keys.reduce((acc, key, index) => {
-                acc[key] = data[index];
-                return acc;
-            }, {});
-            const response = await fetch(`/api/db/${table}`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(body)
-            });
-            document.getElementById('table').dispatchEvent(new Event('change'));
-        }
-    </script>
-
+    <script src="edit_table.js"></script>
 </head>
 
 <body>
     <h1>Edit table</h1>
-    Select table: <select id="table">
+    Select table: <select id="table_name">
         <option value="nauczyciel">nauczyciel</option>
     </select>
     <br>
     <br>
-    <div id="data">
-        </table>
+    <div id="table_container">
+    </div>
 
 </body>
 

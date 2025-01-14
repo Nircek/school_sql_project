@@ -62,6 +62,7 @@ def select_schema():
         APP.db_state = cursor.fetchone() is not None
         if APP.db_state:
             cursor.execute(get_sql_commands("utils.sql", "select schema")[0])
+            APP.db.commit()
             APP.db_tables = [
                 "nauczyciel",
                 "klasa",
@@ -222,14 +223,19 @@ async def post_table(table: str, request: Request):
     keys = list(data.keys())
     values = list([data[k] for k in keys])
     with APP.db.cursor() as cursor:
-        cursor.execute(
-            sql.SQL("INSERT INTO {} ({}) VALUES ({});").format(
-                sql.Identifier(table),
-                sql.SQL(", ").join(map(sql.Identifier, keys)),
-                sql.SQL(", ").join(map(sql.Literal, values)),
+        try:
+            cursor.execute(
+                sql.SQL("INSERT INTO {} ({}) VALUES ({});").format(
+                    sql.Identifier(table),
+                    sql.SQL(", ").join(map(sql.Identifier, keys)),
+                    sql.SQL(", ").join(map(sql.Literal, values)),
+                )
             )
-        )
+        except psycopg.errors.Error as e:
+            APP.db.rollback()
+            raise e
         APP.db.commit()
+
 
 
 @API_APP.put("/db/{table}/{entity}")
