@@ -5,28 +5,28 @@ CREATE SCHEMA projekt;
 SET
     search_path TO projekt;
 
-CREATE TYPE dzien_tygodnia AS enum (
-    'pn', 'wt', 'śr', 'cz', 'pt', 'sb', 'nd'
-    );
-CREATE TYPE obecnosc AS enum (
-    'ob', 'nb', 'u', 'zw'
-    );
+CREATE TYPE dzien_tygodnia AS enum ('pn', 'wt', 'śr', 'cz', 'pt', 'sb', 'nd');
 
-CREATE TABLE "nauczyciel"
+CREATE TYPE obecnosc AS enum ('ob', 'nb', 'u', 'zw');
+
+CREATE TABLE
+    "nauczyciel"
 (
     "nauczyciel_id" serial PRIMARY KEY,
     "imie"          varchar NOT NULL,
     "nazwisko"      varchar NOT NULL
 );
 
-CREATE TABLE "klasa"
+CREATE TABLE
+    "klasa"
 (
     "klasa_id"   serial PRIMARY KEY,
     "nazwa"      varchar NOT NULL,
     "wychowawca" serial REFERENCES "nauczyciel"
 );
 
-CREATE TABLE "uczen"
+CREATE TABLE
+    "uczen"
 (
     "uczen_id" serial PRIMARY KEY,
     "imie"     varchar NOT NULL,
@@ -34,20 +34,23 @@ CREATE TABLE "uczen"
     "klasa_id" serial REFERENCES "klasa"
 );
 
-CREATE TABLE "sala"
+CREATE TABLE
+    "sala"
 (
     "sala_id" serial PRIMARY KEY,
     "nazwa"   varchar NOT NULL
 );
 
-CREATE TABLE "semestr"
+CREATE TABLE
+    "semestr"
 (
     "semestr_id"    serial PRIMARY KEY,
     "data_poczatku" date NOT NULL,
     "data_konca"    date NOT NULL
 );
 
-CREATE TABLE "zajecia"
+CREATE TABLE
+    "zajecia"
 (
     "zajecia_id"    serial PRIMARY KEY,
     "sala_id"       serial REFERENCES "sala",
@@ -59,16 +62,18 @@ CREATE TABLE "zajecia"
     "czas_konc"     time without time zone NOT NULL
 );
 
-CREATE TABLE "frekwencja"
+CREATE TABLE
+    "frekwencja"
 (
     "zajecia_id" serial REFERENCES "zajecia",
-    "data"       date NOT NULL,
+    "data"       date     NOT NULL,
     "uczen_id"   serial REFERENCES "uczen",
     "obecnosc"   obecnosc NOT NULL,
-    PRIMARY KEY ("zajecia_id", "uczen_id")
+    PRIMARY KEY ("zajecia_id", "data", "uczen_id")
 );
 
-CREATE TABLE "platnosc"
+CREATE TABLE
+    "platnosc"
 (
     "platnosc_id" serial PRIMARY KEY,
     "klasa_id"    serial REFERENCES "klasa",
@@ -79,7 +84,8 @@ CREATE TABLE "platnosc"
     "kategoria"   varchar NOT NULL
 );
 
-CREATE TABLE "zaplata"
+CREATE TABLE
+    "zaplata"
 (
     "platnosc_id" serial REFERENCES "platnosc",
     "uczen_id"    serial REFERENCES "uczen",

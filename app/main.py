@@ -170,6 +170,17 @@ def debug_sql_init():
     return {"status": "ok"}
 
 
+@API_APP.post("/debug/db_fill")
+def debug_sql_fill():
+    """Initialize the database"""
+    with APP.db.cursor() as cursor:
+        for cmd in get_sql_commands("fill.sql"):
+            cursor.execute(cmd)
+        APP.db.commit()
+    select_schema()
+    return {"status": "ok"}
+
+
 @API_APP.post("/debug/db_drop")
 def debug_sql_drop():
     """Drop the database"""
@@ -200,7 +211,7 @@ def get_table(table: str):
 
 
 @API_APP.get("/db/{table}/{entity}")
-def get_table_entity(table: str, entity: int):
+def get_table_entity(table: str, entity: str):
     """Return a row from a table by ID"""
     if table not in APP.db_tables:
         return table_not_found(table)
@@ -237,7 +248,6 @@ async def post_table(table: str, request: Request):
         APP.db.commit()
 
 
-
 @API_APP.put("/db/{table}/{entity}")
 async def put_table_entity(table: str, entity: int, request: Request):
     """Update a row in a table by ID"""
@@ -247,17 +257,21 @@ async def put_table_entity(table: str, entity: int, request: Request):
     keys = list(data.keys())
     values = list([data[k] for k in keys])
     with APP.db.cursor() as cursor:
-        cursor.execute(
-            sql.SQL("UPDATE {} SET {} WHERE {} = %s;").format(
-                sql.Identifier(table),
-                sql.SQL(", ").join(
-                    sql.SQL("{} = %s").format(sql.Identifier(k)) for k in keys
+        try:
+            cursor.execute(
+                sql.SQL("UPDATE {} SET {} WHERE {} = %s;").format(
+                    sql.Identifier(table),
+                    sql.SQL(", ").join(
+                        sql.SQL("{} = %s").format(sql.Identifier(k)) for k in keys
+                    ),
+                    sql.Identifier(f"{table}_id"),
                 ),
-                sql.Identifier(f"{table}_id"),
-            ),
-            [*values, entity],
-        )
-        APP.db.commit()
+                [*values, entity],
+            )
+            APP.db.commit()
+        except psycopg.errors.Error as e:
+            APP.db.rollback()
+            raise e
 
 
 @API_APP.delete("/db/{table}/{entity}")
@@ -266,10 +280,14 @@ def delete_table_entity(table: str, entity: int):
     if table not in APP.db_tables:
         return table_not_found(table)
     with APP.db.cursor() as cursor:
-        cursor.execute(
-            sql.SQL("DELETE FROM {} WHERE {} = %s").format(
-                sql.Identifier(table), sql.Identifier(f"{table}_id")
-            ),
-            [entity],
-        )
-        APP.db.commit()
+        try:
+            cursor.execute(
+                sql.SQL("DELETE FROM {} WHERE {} = %s").format(
+                    sql.Identifier(table), sql.Identifier(f"{table}_id")
+                ),
+                [entity],
+            )
+            APP.db.commit()
+        except psycopg.errors.Error as e:
+            APP.db.rollback()
+            raise e

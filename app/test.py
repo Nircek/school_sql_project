@@ -96,6 +96,9 @@ def test():
         [],
         msg="GET nauczyciel {ROOT_URL}/api/db/nauczyciel",
     )
+    response = url("/api/debug/db_drop", "POST")
+    response = url("/setup_db.html", "POST")
+    response = url("/api/debug/db_fill", "POST")
 
 
 test()
