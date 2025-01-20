@@ -4,50 +4,22 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>System zarządzania szkołą</title>
-    <style>
-      body {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        height: 100vh;
-        margin: 0;
-      }
-
-      a {
-        margin: 10px;
-        padding: 10px;
-        border: 1px solid black;
-        border-radius: 5px;
-        text-decoration: none;
-        color: black;
-      }
-
-      a:hover {
-        background-color: lightgray;
-      }
-
-      .semestralne {
-        display: flex;
-        align-items: center;
-        margin-top: 10px;
-        flex-direction: column;
-        border: 1px solid black;
-        padding: 1em;
-      }
-    </style>
+    <link rel="stylesheet" href="main.css" />
     <script type="module">
       import { generateSemestrOptions } from "./main.js";
 
       document.addEventListener("DOMContentLoaded", async () => {
         const wybor_semestru = document.getElementById("wybor_semestru");
+        const semestry = await generateSemestrOptions();
         wybor_semestru.replaceChildren(
-          ...(await generateSemestrOptions()),
+          ...(semestry.length == 0
+            ? [new Option("Brak semestrów", "")]
+            : semestry),
           new Option("...Dodaj nowy...", "new")
         );
         wybor_semestru.addEventListener("change", async (event) => {
           const semestr = event.target.value;
-          if (event.target.selectedIndex != 0 && event.target.value == "new") {
+          if (event.target.value == "new") {
             wybor_semestru.selectedIndex = wybor_semestru.old_value;
             window.location.href = "dodaj_semestr.html"; // TODO: dodaj_semestr needs to redirect because going back will not refresh
             return;
@@ -59,11 +31,27 @@
         });
         wybor_semestru.dispatchEvent(new Event("change"));
       });
+
+      async function postRequest(url) {
+        try {
+          await fetch(url, { method: "POST" });
+          window.alert("Udało się!");
+        } catch (error) {
+          window.alert(`Błąd (${url}): ${error}`);
+        }
+      }
+      window.postRequest = postRequest;
     </script>
   </head>
 
   <body>
     <h1>System zarządzania szkołą</h1>
+    <div class="debug">
+      <a href="javascript:postRequest('/api/debug/db_drop')">DROP</a>
+      <a href="javascript:postRequest('/api/debug/db_init')">INIT</a>
+      <a href="javascript:postRequest('/api/debug/db_fill')">FILL</a>
+      <a href="edytuj_baze.html">EDIT</a>
+    </div>
     <a href="nauczyciele.html">Nauczyciele</a>
     <a href="klasy.html">Klasy (uczniowie i płatności)</a>
     <a href="sale.html">Sale</a>

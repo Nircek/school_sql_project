@@ -13,15 +13,15 @@ CREATE TABLE
     "nauczyciel"
 (
     "nauczyciel_id" serial PRIMARY KEY,
-    "imie"          varchar NOT NULL,
-    "nazwisko"      varchar NOT NULL
+    "imie"          varchar NOT NULL CHECK (length("imie") > 0),
+    "nazwisko"      varchar NOT NULL CHECK (length("nazwisko") > 0)
 );
 
 CREATE TABLE
     "klasa"
 (
     "klasa_id"   serial PRIMARY KEY,
-    "nazwa"      varchar NOT NULL,
+    "nazwa"      varchar NOT NULL CHECK (length("nazwa") > 0),
     "wychowawca" serial REFERENCES "nauczyciel"
 );
 
@@ -29,8 +29,8 @@ CREATE TABLE
     "uczen"
 (
     "uczen_id" serial PRIMARY KEY,
-    "imie"     varchar NOT NULL,
-    "nazwisko" varchar NOT NULL,
+    "imie"     varchar NOT NULL CHECK (length("imie") > 0),
+    "nazwisko" varchar NOT NULL CHECK (length("nazwisko") > 0),
     "klasa_id" serial REFERENCES "klasa"
 );
 
@@ -38,7 +38,7 @@ CREATE TABLE
     "sala"
 (
     "sala_id" serial PRIMARY KEY,
-    "nazwa"   varchar NOT NULL
+    "nazwa"   varchar NOT NULL CHECK (length("nazwa") > 0)
 );
 
 CREATE TABLE
@@ -46,7 +46,7 @@ CREATE TABLE
 (
     "semestr_id"    serial PRIMARY KEY,
     "data_poczatku" date NOT NULL,
-    "data_konca"    date NOT NULL
+    "data_konca"    date NOT NULL CHECK ("data_konca" >= "data_poczatku")
 );
 
 CREATE TABLE
@@ -59,7 +59,7 @@ CREATE TABLE
     "semestr_id"    serial REFERENCES "semestr",
     "dzien"         dzien_tygodnia         NOT NULL,
     "czas_rozp"     time without time zone NOT NULL,
-    "czas_konc"     time without time zone NOT NULL
+    "czas_konc"     time without time zone NOT NULL CHECK ("czas_konc" > "czas_rozp")
 );
 
 CREATE TABLE
@@ -77,9 +77,9 @@ CREATE TABLE
 (
     "platnosc_id" serial PRIMARY KEY,
     "klasa_id"    serial REFERENCES "klasa",
-    "tytul"       varchar NOT NULL,
+    "tytul"       varchar NOT NULL CHECK (length("tytul") > 0),
     "opis"        varchar NOT NULL,
-    "kwota"       int     NOT NULL,
+    "kwota"       int     NOT NULL CHECK ("kwota" > 0),
     "termin"      date    NOT NULL,
     "kategoria"   varchar NOT NULL
 );
@@ -95,3 +95,4 @@ CREATE TABLE
 
 -- CHANGELOG:
 -- - dodana "frekwencja"."data"
+-- - dodane checki

@@ -1,0 +1,56 @@
+body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: calc(100vh - 2em);
+  margin: 1em;
+}
+
+table {
+  border-collapse: collapse;
+  margin: 10px;
+}
+
+th,
+td {
+  border: 1px solid black;
+  padding: 8px;
+  text-align: left;
+}
+
+th {
+  background-color: #f2f2f2;
+}
+
+a {
+  margin: 10px;
+  padding: 10px;
+  border: 1px solid black;
+  border-radius: 5px;
+  text-decoration: none;
+  color: black;
+}
+
+.debug > a {
+  border-color: red;
+  color: red;
+  font-weight: bold;
+}
+
+a:hover {
+  background-color: lightgray;
+}
+
+.debug {
+  display: flex;
+}
+
+.semestralne {
+  display: flex;
+  align-items: center;
+  margin-top: 10px;
+  flex-direction: column;
+  border: 1px solid black;
+  padding: 1em;
+}

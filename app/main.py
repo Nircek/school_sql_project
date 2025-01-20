@@ -47,21 +47,21 @@ def get_sql_commands(file, part=None):
     with open(SQL_FOLDER / file, encoding="utf-8") as f:
         cmd = f.read()
     if part is None:
-        return list([f"{x};" for x in cmd.strip().split(";") if x])
+        return cmd
     regex = re.compile(rf"(?:^|\n)---\s*{part}\s*([\s\S]*?)(?:\n---|$)")
     m = regex.search(cmd)
     if not m:
         assert m, (f"Command {cmd} not found in {file}", regex, cmd)
-    return list([f"{x};" for x in m.group(1).strip().split(";") if x])
+    return m.group(1)
 
 
 def select_schema():
     """Check if the schema exists and select it"""
     with APP.db.cursor() as cursor:
-        cursor.execute(get_sql_commands("utils.sql", "check schema")[0])
+        cursor.execute(get_sql_commands("utils.sql", "check schema"))
         APP.db_state = cursor.fetchone() is not None
         if APP.db_state:
-            cursor.execute(get_sql_commands("utils.sql", "select schema")[0])
+            cursor.execute(get_sql_commands("utils.sql", "select schema"))
             APP.db.commit()
             APP.db_tables = [
                 "nauczyciel",
@@ -103,6 +103,8 @@ APP.mount("/", StaticFiles(directory="static", html=True), name="static")
 @API_APP.exception_handler(Exception)
 async def debug_exception_handler(_: Request, exc: Exception):
     """Return the full traceback in the response if an exception occurs"""
+    if isinstance(exc, psycopg.errors.InFailedSqlTransaction):
+        APP.db.rollback()
     return Response(
         content="".join(traceback.format_exception(None, exc, exc.__traceback__)),
         media_type="text/plain",
@@ -163,8 +165,7 @@ def debug_error():
 def debug_sql_init():
     """Initialize the database"""
     with APP.db.cursor() as cursor:
-        for cmd in get_sql_commands("init.sql"):
-            cursor.execute(cmd)
+        cursor.execute(get_sql_commands("init.sql"))
         APP.db.commit()
     select_schema()
     return {"status": "ok"}
@@ -174,8 +175,7 @@ def debug_sql_init():
 def debug_sql_fill():
     """Initialize the database"""
     with APP.db.cursor() as cursor:
-        for cmd in get_sql_commands("fill.sql"):
-            cursor.execute(cmd)
+        cursor.execute(get_sql_commands("fill.sql"))
         APP.db.commit()
     select_schema()
     return {"status": "ok"}
@@ -185,8 +185,11 @@ def debug_sql_fill():
 def debug_sql_drop():
     """Drop the database"""
     with APP.db.cursor() as cursor:
-        for cmd in get_sql_commands("utils.sql", "drop schema"):
-            cursor.execute(cmd)
+        try:
+            cursor.execute(get_sql_commands("utils.sql", "drop schema"))
+        except psycopg.errors.Error as e:
+            APP.db.rollback()
+            raise e
         APP.db.commit()
     init_db()
     return {"status": "ok"}
