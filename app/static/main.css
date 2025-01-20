@@ -42,15 +42,18 @@ a:hover {
   background-color: lightgray;
 }
 
-.debug {
+.debug,
+.container {
   display: flex;
 }
 
-.semestralne {
+.semestralne,
+.klasowe {
   display: flex;
   align-items: center;
   margin-top: 10px;
   flex-direction: column;
   border: 1px solid black;
   padding: 1em;
+  margin: 1em;
 }

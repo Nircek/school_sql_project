@@ -104,12 +104,37 @@ export class SQLTable {
       tr.replaceChildren(
         ...this.columns.map((key) => {
           const td = document.createElement("td");
+          td.addEventListener("click", (ev) => {
+            if (ev.detail !== 2) return;
+            const target = ev.target;
+            const input = document.createElement("input");
+            input.setAttribute("type", "text");
+            input.value = target.textContent;
+            input.addEventListener("keyup", (ev) => {
+              if (ev.key === "Enter") {
+                this.updateRow(row[this.index], key, input.value);
+                input.replaceWith(input.value);
+                input.focus();
+              }
+            });
+            target.replaceChildren(input);
+          });
           td.textContent = row[key];
           return td;
         }),
         btn
       );
       return tr;
+    });
+  }
+
+  async updateRow(id, key, value) {
+    await fetch(`/api/db/${this.name}/${id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ [this.index]: id, [key]: value }),
     });
   }
 
@@ -204,4 +229,10 @@ export async function generateSemestrOptions() {
     (obj) =>
       new Option(`${obj.data_poczatku} -- ${obj.data_konca}`, obj.semestr_id)
   );
+}
+
+export async function generateKlasaOptions() {
+  let semestry = await fetch(`/api/db/klasa`);
+  semestry = await semestry.json();
+  return semestry.map((obj) => new Option(`${obj.nazwa}`, obj.klasa_id));
 }

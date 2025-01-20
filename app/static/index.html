@@ -6,7 +6,7 @@
     <title>System zarządzania szkołą</title>
     <link rel="stylesheet" href="main.css" />
     <script type="module">
-      import { generateSemestrOptions } from "./main.js";
+      import { generateSemestrOptions, generateKlasaOptions } from "./main.js";
 
       document.addEventListener("DOMContentLoaded", async () => {
         const wybor_semestru = document.getElementById("wybor_semestru");
@@ -30,6 +30,18 @@
           wybor_semestru.old_value = wybor_semestru.value;
         });
         wybor_semestru.dispatchEvent(new Event("change"));
+
+        const wybor_klasy = document.getElementById("wybor_klasy");
+        const klasy = await generateKlasaOptions();
+        wybor_klasy.replaceChildren(
+          ...(klasy.length == 0 ? [new Option("Brak klas", "")] : klasy)
+        );
+        wybor_klasy.addEventListener("change", async (event) => {
+          const klasa = event.target.value;
+          document.querySelectorAll(".klasowe a").forEach((element) => {
+            element.href = `${element.href.split("?")[0]}?klasa=${klasa}`;
+          });
+        });
       });
 
       async function postRequest(url) {
@@ -52,17 +64,30 @@
       <a href="javascript:postRequest('/api/debug/db_fill')">FILL</a>
       <a href="edytuj_baze.html">EDIT</a>
     </div>
-    <a href="nauczyciele.html">Nauczyciele</a>
-    <a href="klasy.html">Klasy (uczniowie i płatności)</a>
-    <a href="sale.html">Sale</a>
-    <div class="semestralne">
-      <div>
-        Semestr:
-        <select id="wybor_semestru"></select>
+    <div class="container">
+      <a href="nauczyciele.html">Nauczyciele</a>
+      <a href="sale.html">Sale</a>
+      <a href="klasy.html">Klasy</a>
+      <a href="semestry.html">Semestry</a>
+    </div>
+    <div class="container">
+      <div class="klasowe">
+        <div>
+          Klasa:
+          <select id="wybor_klasy"></select>
+        </div>
+        <a href="uczniowie.html">Uczniowie</a>
+        <a href="platnosci.html">Płatności</a>
       </div>
-      <a class="semestralny" href="zobacz_plan.html">Zobacz plan</a>
-      <a class="semestralny" href="edytuj_plan.html">Edytuj plan</a>
-      <a class="semestralny" href="frekwencja.html">Edytuj frekwencję</a>
+      <div class="semestralne">
+        <div>
+          Semestr:
+          <select id="wybor_semestru"></select>
+        </div>
+        <a class="semestralny" href="zobacz_plan.html">Zobacz plan</a>
+        <a class="semestralny" href="edytuj_plan.html">Edytuj plan</a>
+        <a class="semestralny" href="frekwencja.html">Edytuj frekwencję</a>
+      </div>
     </div>
   </body>
 </html>
