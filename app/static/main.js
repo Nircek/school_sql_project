@@ -1,10 +1,10 @@
-function isSetsEqual(a, b) {
+export function isSetsEqual(a, b) {
   a = new Set(a);
   b = new Set(b);
   return a.size === b.size && a.isSubsetOf(b);
 }
 
-class SQLTable {
+export class SQLTable {
   constructor(name, columns, index = null) {
     this.name = name;
     this.columns = columns;
@@ -150,7 +150,7 @@ class SQLTable {
   }
 }
 
-const table_to_columns = {
+export const table_to_columns = {
   nauczyciel: ["nauczyciel_id", "imie", "nazwisko"],
   klasa: ["klasa_id", "nazwa", "wychowawca"],
   uczen: ["uczen_id", "imie", "nazwisko", "klasa_id"],
@@ -179,7 +179,7 @@ const table_to_columns = {
   zaplata: ["platnosc_id", "uczen_id", "kwota"],
 };
 
-const table_to_index = {
+export const table_to_index = {
   nauczyciel: null,
   klasa: null,
   uczen: null,
@@ -191,11 +191,17 @@ const table_to_index = {
   zaplata: undefined,
 };
 
-function generateOptions() {
-  return Object.keys(table_to_columns).map((table_name) => {
-    const option = document.createElement("option");
-    option.value = table_name;
-    option.textContent = table_name;
-    return option;
-  });
+export function generateTableOptions() {
+  return Object.keys(table_to_columns).map(
+    (table_name) => new Option(table_name, table_name)
+  );
+}
+
+export async function generateSemestrOptions() {
+  let semestry = await fetch(`/api/db/semestr`);
+  semestry = await semestry.json();
+  return semestry.map(
+    (obj) =>
+      new Option(`${obj.data_poczatku} -- ${obj.data_konca}`, obj.semestr_id)
+  );
 }
