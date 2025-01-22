@@ -71,6 +71,7 @@ def select_schema():
                 "semestr",
                 "zajecia",
                 "frekwencja",
+                "ocena",
                 "platnosc",
                 "zaplata",
             ]

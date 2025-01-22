@@ -315,6 +315,7 @@ export const table_to_columns = {
     "czas_konc",
   ],
   frekwencja: ["zajecia_id", "data", "uczen_id", "obecnosc"],
+  ocena: ["ocena_id", "zajecia_id", "uczen_id", "ocena", "data", "komentarz"],
   platnosc: [
     "platnosc_id",
     "klasa_id",
@@ -335,6 +336,7 @@ export const table_to_index = {
   semestr: null,
   zajecia: null,
   frekwencja: ["zajecia_id", "data", "uczen_id"],
+  ocena: null,
   platnosc: null,
   zaplata: ["platnosc_id", "uczen_id"],
 };

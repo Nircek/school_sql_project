@@ -72,6 +72,15 @@ CREATE TABLE
     PRIMARY KEY ("zajecia_id", "data", "uczen_id")
 );
 
+CREATE TABLE "ocena" (
+    "ocena_id" serial PRIMARY KEY,
+    "zajecia_id" serial REFERENCES "zajecia",
+    "uczen_id" serial REFERENCES "uczen",
+    "ocena" int NOT NULL CHECK ("ocena" >= 1 AND "ocena" <= 6),
+    "data" date NOT NULL,
+    "komentarz" varchar NOT NULL
+);
+
 CREATE TABLE
     "platnosc"
 (
