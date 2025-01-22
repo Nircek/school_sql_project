@@ -135,7 +135,7 @@ export class SQLTable {
   }
 
   prepareNewData() {
-    const data = Array.from(this.addElement.querySelectorAll("input"))
+    const data = Array.from(this.addElement.querySelectorAll("input,select"))
       .filter((input) => input.disabled === false)
       .map((input) => input.value);
     return this.columns
@@ -165,7 +165,7 @@ export class SQLTable {
     const tbody = document.createElement("tbody");
     tbody.replaceChildren(
       ...(await this.generateDataRows(data)),
-      this.generateAddRow()
+      await this.generateAddRow()
     );
     return tbody;
   }
@@ -191,13 +191,10 @@ export class SQLTable {
 
   async generateTableCellElement(row, col) {
     const td = document.createElement("td");
-    const mapping = {
-      "klasa:wychowawca": "nauczyciel",
-    };
     if (
       !(
         (col !== this.index && col.endsWith("_id")) ||
-        mapping[`${this.name}:${col}`] !== undefined
+        custom_fk_mapping[`${this.name}:${col}`] !== undefined
       )
     ) {
       td.textContent = row[col];
@@ -217,7 +214,8 @@ export class SQLTable {
         target.replaceChildren(input);
       });
     } else {
-      const table = mapping[`${this.name}:${col}`] || col.slice(0, -3);
+      const table =
+        custom_fk_mapping[`${this.name}:${col}`] || col.slice(0, -3);
       td.textContent = await getPrettyNameById(table, row[col]);
       td.addEventListener("click", async (ev) => {
         if (ev.detail !== 2) return;
@@ -250,21 +248,34 @@ export class SQLTable {
     }
   }
 
-  generateAddRow() {
+  async generateAddRow() {
     const btn = document.createElement("td");
     btn.appendChild(this.createAddButton());
     this.addElement.replaceChildren(
-      ...this.columns.map((key) => {
-        const td = document.createElement("td");
-        const input = document.createElement("input");
-        input.setAttribute("type", "text");
-        if (key === this.index) input.disabled = true;
-        input.addEventListener("keyup", (ev) => {
-          if (ev.key === "Enter") this.handleAdd();
-        });
-        td.appendChild(input);
-        return td;
-      }),
+      ...(await Promise.all(
+        this.columns.map(async (col) => {
+          const td = document.createElement("td");
+          if (
+            !(
+              (col !== this.index && col.endsWith("_id")) ||
+              custom_fk_mapping[`${this.name}:${col}`] !== undefined
+            )
+          ) {
+            const input = document.createElement("input");
+            input.setAttribute("type", "text");
+            if (col === this.index) input.disabled = true;
+            input.addEventListener("keydown", (ev) => {
+              if (ev.key === "Enter") this.handleAdd();
+            });
+            td.appendChild(input);
+          } else {
+            const table =
+              custom_fk_mapping[`${this.name}:${col}`] || col.slice(0, -3);
+            td.appendChild(await generateValuesElement(table));
+          }
+          return td;
+        })
+      )),
       btn
     );
     return this.addElement;
@@ -326,6 +337,10 @@ export const table_to_index = {
   frekwencja: ["zajecia_id", "data", "uczen_id"],
   platnosc: null,
   zaplata: ["platnosc_id", "uczen_id"],
+};
+
+export const custom_fk_mapping = {
+  "klasa:wychowawca": "nauczyciel",
 };
 
 export function generateTableOptions() {
