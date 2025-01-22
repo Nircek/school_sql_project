@@ -4,6 +4,20 @@ export function isSetsEqual(a, b) {
   return a.size === b.size && a.isSubsetOf(b);
 }
 
+export async function apiRequest(url, init) {
+  const response = await fetch(url, init);
+  if (!response.ok) {
+    let message = await response.text();
+    if (message === "") message = response.statusText;
+    const re = /Traceback [\s\S]*?\n(\S[\s\S]*)/;
+    const match = re.exec(message);
+    if (match !== null) message = match[1];
+    alert(message);
+    throw new Error(`Error: ${response.status} ${message}`);
+  }
+  return response;
+}
+
 export class SQLTable {
   constructor(name, columns, index = null) {
     this.name = name;
@@ -14,23 +28,31 @@ export class SQLTable {
   }
 
   async getRows() {
-    const response = await fetch(`/api/db/${this.name}`);
+    const response = await apiRequest(`/api/db/${this.name}`);
     return await response.json();
   }
 
   async deleteRow(id) {
-    await fetch(`/api/db/${this.name}/${id}`, { method: "DELETE" });
-    this.refresh();
+    try {
+      await apiRequest(`/api/db/${this.name}/${id}`, { method: "DELETE" });
+    } catch (e) {
+      console.error(e);
+    }
+    await this.refresh();
   }
 
   async addRow(obj) {
-    await fetch(`/api/db/${this.name}`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(obj),
-    });
+    try {
+      await apiRequest(`/api/db/${this.name}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(obj),
+      });
+    } catch (e) {
+      console.error(e);
+    }
     await this.refresh();
     this.addElement.querySelector("input:not([disabled])").focus();
   }
@@ -38,26 +60,26 @@ export class SQLTable {
   createRefreshButton() {
     const button = document.createElement("button");
     button.textContent = "\u27f3";
-    button.addEventListener("click", () => this.refresh());
+    button.addEventListener("click", async () => await this.refresh());
     return button;
   }
 
   createDeleteButton(id) {
     const button = document.createElement("button");
     button.textContent = "\u2716";
-    button.addEventListener("click", () => this.deleteRow(id));
+    button.addEventListener("click", async () => await this.deleteRow(id));
     return button;
   }
 
   createAddButton() {
     const button = document.createElement("button");
     button.textContent = "\u2795";
-    button.addEventListener("click", () => this.handleAdd());
+    button.addEventListener("click", async () => await this.handleAdd());
     return button;
   }
 
-  handleAdd() {
-    this.addRow(this.prepareNewData());
+  async handleAdd() {
+    await this.addRow(this.prepareNewData());
   }
 
   prepareNewData() {
@@ -129,13 +151,18 @@ export class SQLTable {
   }
 
   async updateRow(id, key, value) {
-    await fetch(`/api/db/${this.name}/${id}`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ [this.index]: id, [key]: value }),
-    });
+    try {
+      await apiRequest(`/api/db/${this.name}/${id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ [this.index]: id, [key]: value }),
+      });
+    } catch (e) {
+      console.error(e);
+    }
+    await this.refresh();
   }
 
   generateAddRow() {
@@ -223,7 +250,7 @@ export function generateTableOptions() {
 }
 
 export async function generateSemestrOptions() {
-  let semestry = await fetch(`/api/db/semestr`);
+  let semestry = await apiRequest(`/api/db/semestr`);
   semestry = await semestry.json();
   return semestry.map(
     (obj) =>
@@ -232,7 +259,7 @@ export async function generateSemestrOptions() {
 }
 
 export async function generateKlasaOptions() {
-  let semestry = await fetch(`/api/db/klasa`);
+  let semestry = await apiRequest(`/api/db/klasa`);
   semestry = await semestry.json();
   return semestry.map((obj) => new Option(`${obj.nazwa}`, obj.klasa_id));
 }

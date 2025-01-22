@@ -42,15 +42,12 @@
             element.href = `${element.href.split("?")[0]}?klasa=${klasa}`;
           });
         });
+        wybor_klasy.dispatchEvent(new Event("change"));
       });
 
       async function postRequest(url) {
-        try {
-          await fetch(url, { method: "POST" });
-          window.alert("Udało się!");
-        } catch (error) {
-          window.alert(`Błąd (${url}): ${error}`);
-        }
+        await apiRequest(url, { method: "POST" });
+        window.alert("Udało się!");
       }
       window.postRequest = postRequest;
     </script>
@@ -65,10 +62,10 @@
       <a href="edytuj_baze.html">EDIT</a>
     </div>
     <div class="container">
-      <a href="nauczyciele.html">Nauczyciele</a>
-      <a href="sale.html">Sale</a>
-      <a href="klasy.html">Klasy</a>
-      <a href="semestry.html">Semestry</a>
+      <a href="edytuj_baze.html?table=nauczyciel">Nauczyciele</a>
+      <a href="edytuj_baze.html?table=sala">Sale</a>
+      <a href="edytuj_baze.html?table=klasa">Klasy</a>
+      <a href="edytuj_baze.html?table=semestr">Semestry</a>
     </div>
     <div class="container">
       <div class="klasowe">
