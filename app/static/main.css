@@ -57,3 +57,7 @@ a:hover {
   padding: 1em;
   margin: 1em;
 }
+
+#table_name {
+  margin-bottom: 0.5em;
+}

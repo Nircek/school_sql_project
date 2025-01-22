@@ -6,11 +6,11 @@
     <title>System zarządzania szkołą</title>
     <link rel="stylesheet" href="main.css" />
     <script type="module">
-      import { generateSemestrOptions, generateKlasaOptions } from "./main.js";
+      import { generateValuesOptions, apiRequest } from "./main.js";
 
       document.addEventListener("DOMContentLoaded", async () => {
         const wybor_semestru = document.getElementById("wybor_semestru");
-        const semestry = await generateSemestrOptions();
+        const semestry = await generateValuesOptions("semestr");
         wybor_semestru.replaceChildren(
           ...(semestry.length == 0
             ? [new Option("Brak semestrów", "")]
@@ -32,7 +32,7 @@
         wybor_semestru.dispatchEvent(new Event("change"));
 
         const wybor_klasy = document.getElementById("wybor_klasy");
-        const klasy = await generateKlasaOptions();
+        const klasy = await generateValuesOptions("klasa");
         wybor_klasy.replaceChildren(
           ...(klasy.length == 0 ? [new Option("Brak klas", "")] : klasy)
         );

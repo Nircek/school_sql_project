@@ -18,6 +18,53 @@ export async function apiRequest(url, init) {
   return response;
 }
 
+export async function getPrettyName(table, obj) {
+  const prettierObj = {
+    nauczyciel: () => `${obj.imie} ${obj.nazwisko}`,
+    klasa: () => `${obj.nazwa}`,
+    uczen: async () =>
+      `${await getPrettyNameById("klasa", obj.klasa_id)} - ${obj.imie} ${
+        obj.nazwisko
+      }`,
+    sala: () => `${obj.nazwa}`,
+    semestr: () => `${obj.data_poczatku} -- ${obj.data_konca}`,
+    zajecia: async () =>
+      [
+        await getPrettyNameById("semestr", obj.semestr_id),
+        await getPrettyNameById("nauczyciel", obj.nauczyciel_id),
+        await getPrettyNameById("klasa", obj.klasa_id),
+        obj.dzien,
+        obj.czas_rozp,
+      ].join(" "),
+    platnosc: async () =>
+      `${await getPrettyNameById("klasa", obj.klasa_id)} ${obj.tytul}`,
+  };
+  if (table in prettierObj) return await prettierObj[table]();
+  throw new Error(`No pretty name for table ${table}`);
+}
+
+export async function getPrettyNameByIdTable(table) {
+  const response = await apiRequest(`/api/db/${table}`);
+  return await response.json();
+}
+
+const getPrettyNameByIdCache = {};
+
+export async function getPrettyNameById(table, id) {
+  if (!(table in getPrettyNameByIdCache)) {
+    getPrettyNameByIdCache[table] = getPrettyNameByIdTable(table);
+  }
+  let table_rows = await getPrettyNameByIdCache[table];
+  console.log(table_rows);
+  const find = (id) => table_rows.find((obj) => obj[`${table}_id`] == id);
+  if (find(id) === undefined) {
+    getPrettyNameByIdCache[table] = getPrettyNameByIdTable(table);
+    table_rows = await getPrettyNameByIdCache[table];
+  }
+  const obj = find(id);
+  return await getPrettyName(table, obj);
+}
+
 export class SQLTable {
   constructor(name, columns, index = null) {
     this.name = name;
@@ -144,22 +191,46 @@ export class SQLTable {
 
   async generateTableCellElement(row, col) {
     const td = document.createElement("td");
-    td.addEventListener("click", (ev) => {
-      if (ev.detail !== 2) return;
-      const target = ev.target;
-      const input = document.createElement("input");
-      input.setAttribute("type", "text");
-      input.value = target.textContent;
-      input.addEventListener("keydown", async (ev) => {
-        if (ev.key === "Enter") {
-          await this.updateRow(this.getId(row), col, input.value);
-          input.replaceWith(input.value);
-          input.focus();
-        }
+    const mapping = {
+      "klasa:wychowawca": "nauczyciel",
+    };
+    if (
+      !(
+        (col !== this.index && col.endsWith("_id")) ||
+        mapping[`${this.name}:${col}`] !== undefined
+      )
+    ) {
+      td.textContent = row[col];
+      td.addEventListener("click", (ev) => {
+        if (ev.detail !== 2) return;
+        const target = ev.target;
+        const input = document.createElement("input");
+        input.setAttribute("type", "text");
+        input.value = target.textContent;
+        input.addEventListener("keydown", async (ev) => {
+          if (ev.key === "Enter") {
+            await this.updateRow(this.getId(row), col, input.value);
+            input.replaceWith(input.value);
+            input.focus();
+          }
+        });
+        target.replaceChildren(input);
       });
-      target.replaceChildren(input);
-    });
-    td.textContent = row[col];
+    } else {
+      const table = mapping[`${this.name}:${col}`] || col.slice(0, -3);
+      td.textContent = await getPrettyNameById(table, row[col]);
+      td.addEventListener("click", async (ev) => {
+        if (ev.detail !== 2) return;
+        const target = ev.target;
+        const input = await generateValuesElement(table, row[col]);
+        input.addEventListener("change", async (ev) => {
+          await this.updateRow(this.getId(row), col, input.value);
+          input.replaceWith(await getPrettyNameById(table, input.value));
+          input.focus();
+        });
+        target.replaceChildren(input);
+      });
+    }
     return td;
   }
 
@@ -171,7 +242,12 @@ export class SQLTable {
       },
       body: JSON.stringify({ [key]: value }),
     });
-    // await this.refresh();
+    if (
+      key === this.index ||
+      (Array.isArray(this.index) && this.index.includes(key))
+    ) {
+      await this.refresh();
+    }
   }
 
   generateAddRow() {
@@ -258,17 +334,31 @@ export function generateTableOptions() {
   );
 }
 
-export async function generateSemestrOptions() {
-  let semestry = await apiRequest(`/api/db/semestr`);
-  semestry = await semestry.json();
-  return semestry.map(
-    (obj) =>
-      new Option(`${obj.data_poczatku} -- ${obj.data_konca}`, obj.semestr_id)
+export async function generateValuesOptions(table) {
+  let rows = await apiRequest(`/api/db/${table}`);
+  rows = await rows.json();
+  generateValuesOptionsCache[table] = await Promise.all(
+    rows.map(
+      async (obj) =>
+        new Option(await getPrettyName(table, obj), obj[`${table}_id`])
+    )
+  );
+  return generateValuesOptionsCache[table];
+}
+
+const generateValuesOptionsCache = {};
+export async function generateValuesOptionsCached(table) {
+  if (!(table in generateValuesOptionsCache)) {
+    generateValuesOptionsCache[table] = generateValuesOptions(table);
+  }
+  return (await generateValuesOptionsCache[table]).map((e) =>
+    e.cloneNode(true)
   );
 }
 
-export async function generateKlasaOptions() {
-  let semestry = await apiRequest(`/api/db/klasa`);
-  semestry = await semestry.json();
-  return semestry.map((obj) => new Option(`${obj.nazwa}`, obj.klasa_id));
+export async function generateValuesElement(table, value) {
+  const select = document.createElement("select");
+  select.replaceChildren(...(await generateValuesOptionsCached(table)));
+  if (value !== undefined) select.value = value;
+  return select;
 }
