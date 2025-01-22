@@ -27,6 +27,11 @@ export class SQLTable {
     this.addElement = document.createElement("tr");
   }
 
+  getId(row) {
+    if (typeof this.index === "string") return row[this.index];
+    return this.index.map((key) => row[key]);
+  }
+
   async getRows() {
     const response = await apiRequest(`/api/db/${this.name}`);
     return await response.json();
@@ -109,60 +114,64 @@ export class SQLTable {
     return thead;
   }
 
-  generateBody(data) {
+  async generateBody(data) {
     const tbody = document.createElement("tbody");
     tbody.replaceChildren(
-      ...this.generateDataRows(data),
+      ...(await this.generateDataRows(data)),
       this.generateAddRow()
     );
     return tbody;
   }
 
-  generateDataRows(data) {
-    return data.map((row) => {
-      const tr = document.createElement("tr");
-      const btn = document.createElement("td");
-      btn.appendChild(this.createDeleteButton(row[this.index]));
-      tr.replaceChildren(
-        ...this.columns.map((key) => {
-          const td = document.createElement("td");
-          td.addEventListener("click", (ev) => {
-            if (ev.detail !== 2) return;
-            const target = ev.target;
-            const input = document.createElement("input");
-            input.setAttribute("type", "text");
-            input.value = target.textContent;
-            input.addEventListener("keyup", (ev) => {
-              if (ev.key === "Enter") {
-                this.updateRow(row[this.index], key, input.value);
-                input.replaceWith(input.value);
-                input.focus();
-              }
-            });
-            target.replaceChildren(input);
-          });
-          td.textContent = row[key];
-          return td;
-        }),
-        btn
-      );
-      return tr;
+  async generateDataRows(data) {
+    return await Promise.all(
+      data.map(async (row) => {
+        const tr = document.createElement("tr");
+        const btn = document.createElement("td");
+        btn.appendChild(this.createDeleteButton(this.getId(row)));
+        tr.replaceChildren(
+          ...(await Promise.all(
+            this.columns.map(
+              async (col) => await this.generateTableCellElement(row, col)
+            )
+          )),
+          btn
+        );
+        return tr;
+      })
+    );
+  }
+
+  async generateTableCellElement(row, col) {
+    const td = document.createElement("td");
+    td.addEventListener("click", (ev) => {
+      if (ev.detail !== 2) return;
+      const target = ev.target;
+      const input = document.createElement("input");
+      input.setAttribute("type", "text");
+      input.value = target.textContent;
+      input.addEventListener("keydown", async (ev) => {
+        if (ev.key === "Enter") {
+          await this.updateRow(this.getId(row), col, input.value);
+          input.replaceWith(input.value);
+          input.focus();
+        }
+      });
+      target.replaceChildren(input);
     });
+    td.textContent = row[col];
+    return td;
   }
 
   async updateRow(id, key, value) {
-    try {
-      await apiRequest(`/api/db/${this.name}/${id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ [this.index]: id, [key]: value }),
-      });
-    } catch (e) {
-      console.error(e);
-    }
-    await this.refresh();
+    await apiRequest(`/api/db/${this.name}/${id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ [key]: value }),
+    });
+    // await this.refresh();
   }
 
   generateAddRow() {
@@ -197,7 +206,7 @@ export class SQLTable {
 
     this.tableElement.replaceChildren(
       this.generateHeader(),
-      this.generateBody(data)
+      await this.generateBody(data)
     );
   }
 }
@@ -238,9 +247,9 @@ export const table_to_index = {
   sala: null,
   semestr: null,
   zajecia: null,
-  frekwencja: undefined,
+  frekwencja: ["zajecia_id", "data", "uczen_id"],
   platnosc: null,
-  zaplata: undefined,
+  zaplata: ["platnosc_id", "uczen_id"],
 };
 
 export function generateTableOptions() {

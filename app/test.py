@@ -22,7 +22,7 @@ def url(path, method="GET", data=None, err=False):
     """Make a request to the server"""
     response = requests.request(method, f"{ROOT_URL}{path}", json=data, timeout=2)
     if not err:
-        if response.status_code == 500:
+        if response.status_code in (422, 500):
             print(response.text)
         response.raise_for_status()
     return response
@@ -36,13 +36,13 @@ def assert_response(path, expected, method="GET", data=None, msg=None):
 
 def test():
     """Run the tests"""
-    response = url("/api/debug/db_drop", "POST")
+    assert url("/api/debug/db_drop", "POST").ok
     response = url("/")
     assert "/setup_db.html" in response.url
     assert (
         response.text.find("'/setup_db.html', { method: 'POST' }") != -1
     ), response.text
-    url("/setup_db.html", "POST")
+    assert url("/setup_db.html", "POST").ok
     response = url("/")
     assert (
         response.text.find("'/setup_db.html', { method: 'POST' }") == -1
@@ -96,9 +96,34 @@ def test():
         [],
         msg="GET nauczyciel {ROOT_URL}/api/db/nauczyciel",
     )
-    response = url("/api/debug/db_drop", "POST")
-    response = url("/setup_db.html", "POST")
-    response = url("/api/debug/db_fill", "POST")
+    assert url("/api/debug/db_drop", "POST").ok
+    assert url("/setup_db.html", "POST").ok
+    assert url("/api/debug/db_fill", "POST").ok
+    assert_response(
+        "/api/db/nauczyciel/1",
+        {"nauczyciel_id": 1, "imie": "Jan", "nazwisko": "Matematyk"},
+        msg="GET nauczyciel {ROOT_URL}/api/db/nauczyciel",
+    )
+    assert_response(
+        "/api/db/frekwencja/1,2024-09-02,1",
+        {"data": "2024-09-02", "obecnosc": "ob", "uczen_id": 1, "zajecia_id": 1},
+        msg="GET frekwencja/1,2024-09-02,1 {ROOT_URL}/api/db/frekwencja/1,2024-09-02,1",
+    )
+    assert url("/api/db/frekwencja/1,2024-09-02,1", "PUT", {"obecnosc": "nb"}).ok
+    assert_response(
+        "/api/db/frekwencja/1,2024-09-02,1",
+        {"data": "2024-09-02", "obecnosc": "nb", "uczen_id": 1, "zajecia_id": 1},
+        msg="GET frekwencja/1,2024-09-02,1 {ROOT_URL}/api/db/frekwencja/1,2024-09-02,1",
+    )
+    assert url("/api/db/frekwencja/1,2024-09-02,1", "DELETE").ok
+    assert_response(
+        "/api/db/frekwencja/1,2024-09-02,1",
+        None,
+        msg="GET frekwencja/1,2024-09-02,1 {ROOT_URL}/api/db/frekwencja/1,2024-09-02,1",
+    )
+    assert url("/api/debug/db_drop", "POST").ok
+    assert url("/setup_db.html", "POST").ok
+    assert url("/api/debug/db_fill", "POST").ok
 
 
 test()
