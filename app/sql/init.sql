@@ -13,15 +13,15 @@ CREATE TABLE
     "nauczyciel"
 (
     "nauczyciel_id" serial PRIMARY KEY,
-    "imie"          varchar NOT NULL CHECK (length("imie") > 0),
-    "nazwisko"      varchar NOT NULL CHECK (length("nazwisko") > 0)
+    "imie"          varchar NOT NULL CHECK (LENGTH("imie") > 0),
+    "nazwisko"      varchar NOT NULL CHECK (LENGTH("nazwisko") > 0)
 );
 
 CREATE TABLE
     "klasa"
 (
     "klasa_id"   serial PRIMARY KEY,
-    "nazwa"      varchar NOT NULL CHECK (length("nazwa") > 0),
+    "nazwa"      varchar NOT NULL CHECK (LENGTH("nazwa") > 0),
     "wychowawca" serial REFERENCES "nauczyciel"
 );
 
@@ -29,8 +29,8 @@ CREATE TABLE
     "uczen"
 (
     "uczen_id" serial PRIMARY KEY,
-    "imie"     varchar NOT NULL CHECK (length("imie") > 0),
-    "nazwisko" varchar NOT NULL CHECK (length("nazwisko") > 0),
+    "imie"     varchar NOT NULL CHECK (LENGTH("imie") > 0),
+    "nazwisko" varchar NOT NULL CHECK (LENGTH("nazwisko") > 0),
     "klasa_id" serial REFERENCES "klasa"
 );
 
@@ -38,7 +38,7 @@ CREATE TABLE
     "sala"
 (
     "sala_id" serial PRIMARY KEY,
-    "nazwa"   varchar NOT NULL CHECK (length("nazwa") > 0)
+    "nazwa"   varchar NOT NULL CHECK (LENGTH("nazwa") > 0)
 );
 
 CREATE TABLE
@@ -72,13 +72,14 @@ CREATE TABLE
     PRIMARY KEY ("zajecia_id", "data", "uczen_id")
 );
 
-CREATE TABLE "ocena" (
-    "ocena_id" serial PRIMARY KEY,
+CREATE TABLE "ocena"
+(
+    "ocena_id"   serial PRIMARY KEY,
     "zajecia_id" serial REFERENCES "zajecia",
-    "uczen_id" serial REFERENCES "uczen",
-    "ocena" int NOT NULL CHECK ("ocena" >= 1 AND "ocena" <= 6),
-    "data" date NOT NULL,
-    "komentarz" varchar NOT NULL
+    "uczen_id"   serial REFERENCES "uczen",
+    "ocena"      int     NOT NULL CHECK ("ocena" >= 1 AND "ocena" <= 6),
+    "data"       date    NOT NULL,
+    "komentarz"  varchar NOT NULL
 );
 
 CREATE TABLE
@@ -86,7 +87,7 @@ CREATE TABLE
 (
     "platnosc_id" serial PRIMARY KEY,
     "klasa_id"    serial REFERENCES "klasa",
-    "tytul"       varchar NOT NULL CHECK (length("tytul") > 0),
+    "tytul"       varchar NOT NULL CHECK (LENGTH("tytul") > 0),
     "opis"        varchar NOT NULL,
     "kwota"       int     NOT NULL CHECK ("kwota" > 0),
     "termin"      date    NOT NULL,

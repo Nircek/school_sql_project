@@ -1,20 +1,27 @@
 <!DOCTYPE html>
 <html lang="en">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Setup Database</title>
     <script>
-        async function setupDatabase() {
-            const response = await fetch('/setup_db.html', { method: 'POST' });
-            window.location.href = '/';
-        }
+      async function setupDatabase() {
+        const response = await fetch("/setup_db.html", { method: "POST" });
+        window.location.href = "/";
+      }
     </script>
-</head>
+    <style>
+      body {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        margin: 0;
+      }
+    </style>
+  </head>
 
-<body>
+  <body>
     <button onclick="setupDatabase()">Setup Database</button>
-</body>
-
+  </body>
 </html>

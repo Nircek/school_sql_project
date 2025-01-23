@@ -79,6 +79,24 @@ def select_schema():
                 "frekwencja": ("zajecia_id", "data", "uczen_id"),
                 "zaplata": ("platnosc_id", "uczen_id"),
             }
+            APP.db_ordering = {
+                "nauczyciel": ("nazwisko", "imie", "nauczyciel_id"),
+                "klasa": ("nazwa", "klasa_id"),
+                "uczen": ("klasa_id", "nazwisko", "imie", "uczen_id"),
+                "sala": ("nazwa", "sala_id"),
+                "semestr": ("data_poczatku", "semestr_id"),
+                "zajecia": (
+                    "semestr_id",
+                    "klasa_id",
+                    "dzien",
+                    "czas_rozp",
+                    "zajecia_id",
+                ),
+                "frekwencja": ("zajecia_id", "data", "uczen_id"),
+                "ocena": ("zajecia_id", "uczen_id"),
+                "platnosc": ("klasa_id", "tytul", "platnosc_id"),
+                "zaplata": ("platnosc_id", "uczen_id"),
+            }
 
 
 def init_db():
@@ -214,7 +232,12 @@ def get_table(table: str):
     if table not in APP.db_tables:
         return table_not_found(table)
     with APP.db.cursor() as cursor:
-        cursor.execute(sql.SQL("SELECT * FROM {}").format(sql.Identifier(table)))
+        cursor.execute(
+            sql.SQL("SELECT * FROM {} ORDER BY {}").format(
+                sql.Identifier(table),
+                sql.SQL(", ").join(map(sql.Identifier, APP.db_ordering[table])),
+            )
+        )
         return cursor.fetchall()
 
 
