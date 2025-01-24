@@ -175,7 +175,9 @@ export class SQLTable {
     const tbody = document.createElement("tbody");
     tbody.replaceChildren(
       ...(await this.generateDataRows(data)),
-      await this.generateAddRow()
+      ...(this.columns.some((e) => e.endsWith("_"))
+        ? []
+        : [await this.generateAddRow()])
     );
     return tbody;
   }
@@ -185,7 +187,8 @@ export class SQLTable {
       data.map(async (row) => {
         const tr = document.createElement("tr");
         const btn = document.createElement("td");
-        btn.appendChild(this.createDeleteButton(this.getId(row)));
+        if (!this.columns.some((e) => e.endsWith("_")))
+          btn.appendChild(this.createDeleteButton(this.getId(row)));
         tr.replaceChildren(
           ...(await Promise.all(
             this.columns.map(
@@ -207,6 +210,16 @@ export class SQLTable {
         const url = `${col.slice(2)}_${this.index}.html?id=${row[this.index]}`;
         td.appendChild(this.createActionButton(url));
       } else td.textContent = row[col];
+    } else if (col.endsWith("_")) {
+      const input = document.createElement("input");
+      input.setAttribute("type", "text");
+      input.addEventListener("keydown", async (ev) => {
+        if (ev.key === "Enter") {
+          await this.updateRow(this.getId(row), col, input.value);
+          await this.refresh();
+        }
+      });
+      td.replaceChildren(input);
     } else if (
       !(
         (col !== this.index && col.endsWith("_id")) ||
@@ -309,7 +322,15 @@ export class SQLTable {
     this.tableElement.replaceChildren();
     const data = await this.getRows();
 
-    if (data.length !== 0 && !isSetsEqual(Object.keys(data[0]), this.columns.filter((col) => !col.startsWith("__")))) {
+    if (
+      data.length !== 0 &&
+      !isSetsEqual(
+        Object.keys(data[0]),
+        this.columns.filter(
+          (col) => !col.startsWith("__") && !col.endsWith("_")
+        )
+      )
+    ) {
       console.error("Columns mismatch");
       console.error(Object.keys(data[0]));
       console.error(this.columns);

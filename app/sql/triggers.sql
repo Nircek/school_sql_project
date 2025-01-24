@@ -397,6 +397,17 @@ END;
 $$
 LANGUAGE plpgsql;
 
+CREATE OR REPLACE FUNCTION delete_postep_platnosci()
+RETURNS TRIGGER AS
+$$
+BEGIN
+    DELETE FROM platnosc
+    WHERE platnosc_id = OLD.platnosc_id;
+    RETURN NULL;
+END;
+$$
+LANGUAGE plpgsql;
+
 CREATE TRIGGER insert_into_postep_platnosci
     INSTEAD OF INSERT ON postep_platnosci
     FOR EACH ROW
@@ -406,3 +417,8 @@ CREATE TRIGGER update_postep_platnosci
     INSTEAD OF UPDATE ON postep_platnosci
     FOR EACH ROW
     EXECUTE FUNCTION update_postep_platnosci();
+
+CREATE TRIGGER delete_postep_platnosci
+    INSTEAD OF DELETE ON postep_platnosci
+    FOR EACH ROW
+    EXECUTE FUNCTION delete_postep_platnosci();

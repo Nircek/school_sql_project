@@ -51,7 +51,7 @@ def get_sql_commands(file, part=None):
     regex = re.compile(rf"(?:^|\n)---\s*{part}\s*([\s\S]*?)(?:\n---|$)")
     m = regex.search(cmd)
     if not m:
-        assert m, (f"Command {cmd} not found in {file}", regex, cmd)
+        assert m, (f"Command {part} not found in {file}", regex, cmd)
     return m.group(1)
 
 
@@ -195,7 +195,7 @@ def debug_sql_init():
             "init",
             "views",
             "triggers",
-            # "functions",
+            "functions",
             ]
         for file in stages:
             cursor.execute(get_sql_commands(f"{file}.sql"))
@@ -235,6 +235,33 @@ def table_not_found(table):
         content={"error": f"Table {table} not found"},
     )
 
+@API_APP.get("/db/{table}/{params}")
+def get_table_params(table: str, params: str):
+    """Return all rows from a virtual table that is a result of a query"""
+    with APP.db.cursor() as cursor:
+        cursor.execute(
+            sql.SQL(get_sql_commands("utils.sql", f"select {table}")),
+            params.split(","),
+        )
+        return cursor.fetchall()
+
+
+@API_APP.put("/db/{table}/{params}/{entity}")
+async def put_table_params_entity(table: str, params: str, entity: str, request: Request):
+    """Update a row in a virtual table that is a result of a query"""
+    data = await request.json()
+    assert len(data.keys()) == 1, "Only one column can be updated"
+    action, value = list(data.items())[0]
+    with APP.db.cursor() as cursor:
+        try:
+            cursor.execute(
+                sql.SQL(get_sql_commands("utils.sql", f"action {table} {action}")),
+                [*params.split(","), *entity.split(","), value],
+            )
+            APP.db.commit()
+        except psycopg.errors.Error as e:
+            APP.db.rollback()
+            raise e
 
 @API_APP.get("/db/{table}")
 def get_table(table: str):

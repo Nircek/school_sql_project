@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>EDIT</title>
+    <link rel="stylesheet" href="main.css" />
+    <script type="module">
+      import {
+        SQLTable,
+        generateTableOptions,
+        table_to_columns,
+        table_to_index,
+        refill,
+      } from "./main.js";
+      document.addEventListener("DOMContentLoaded", async () => {
+        const container = document.getElementById("table_container");
+        const table = new SQLTable(
+          "postep_platnosci",
+          [
+            ...table_to_columns["platnosc"],
+            "_wplacone",
+            "_do_zaplaty",
+            "__szczegóły",
+          ],
+          "platnosc_id"
+        );
+        window.sqltable = table;
+        container.replaceChildren();
+        container.appendChild(table.tableElement);
+        await table.refresh();
+      });
+      document.getElementById("refill").addEventListener("click", refill);
+    </script>
+  </head>
+
+  <body>
+    <div style="display: flex; justify-content: space-between">
+      <a href="index.html">WRÓĆ</a>
+      <div class="debug">
+        <a id="refill">REFILL</a>
+      </div>
+    </div>
+    (kliknij dwukrotnie na element by go edytować oraz kilknij enter by
+    zatwierdzić)
+    <br />
+    <br />
+    <div id="table_container"></div>
+  </body>
+</html>
