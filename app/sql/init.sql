@@ -56,6 +56,7 @@ CREATE TABLE
     sala_id       serial REFERENCES sala,
     klasa_id      serial REFERENCES klasa,
     nauczyciel_id serial REFERENCES nauczyciel,
+    nazwa         varchar NOT NULL CHECK (LENGTH(nazwa) > 0),
     semestr_id    serial REFERENCES semestr,
     dzien         dzien_tygodnia         NOT NULL,
     czas_rozp     time without time zone NOT NULL,
@@ -103,6 +104,3 @@ CREATE TABLE
     PRIMARY KEY (platnosc_id, uczen_id)
 );
 
--- CHANGELOG:
--- - dodana "frekwencja"."data"
--- - dodane checki

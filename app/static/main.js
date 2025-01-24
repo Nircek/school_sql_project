@@ -209,7 +209,11 @@ export class SQLTable {
     if (col.startsWith("_")) {
       if (col.startsWith("__")) {
         td.classList.add("center");
-        const url = `${col.slice(2)}_${this.index}.html?id=${row[this.index]}`;
+        let url = `${col.slice(2)}_${this.index}.html?id=${row[this.index]}`;
+        const searchParams = new URLSearchParams(window.location.search);
+        searchParams.forEach((value, key) => {
+          url += `&${key}=${value}`;
+        });
         td.appendChild(this.createActionButton(url));
       } else td.textContent = row[col];
     } else if (col.endsWith("_")) {
@@ -358,6 +362,7 @@ export const table_to_columns = {
     "sala_id",
     "klasa_id",
     "nauczyciel_id",
+    "nazwa",
     "semestr_id",
     "dzien",
     "czas_rozp",

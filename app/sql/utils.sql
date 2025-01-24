@@ -28,19 +28,19 @@ ORDER BY nazwisko, imie;
 SELECT dodaj_zaplate(%s, %s, %s);
 
 --- select plandla_nauczyciel
-SELECT zajecia_id, sala_id, klasa_id, nauczyciel_id, dzien, czas_rozp, czas_konc
+SELECT zajecia_id, sala_id, klasa_id, nauczyciel_id, nazwa, dzien, czas_rozp, czas_konc
 FROM zajecia
 WHERE semestr_id = %s
   AND nauczyciel_id = %s ORDER BY dzien, czas_rozp;
 
 --- select plandla_klasa
-SELECT zajecia_id, sala_id, klasa_id, nauczyciel_id, dzien, czas_rozp, czas_konc
+SELECT zajecia_id, sala_id, klasa_id, nauczyciel_id, nazwa, dzien, czas_rozp, czas_konc
 FROM zajecia
 WHERE semestr_id = %s
   AND klasa_id = %s ORDER BY dzien, czas_rozp;
 
 --- select plandla_sala
-SELECT zajecia_id, sala_id, klasa_id, nauczyciel_id, dzien, czas_rozp, czas_konc
+SELECT zajecia_id, sala_id, klasa_id, nauczyciel_id, nazwa, dzien, czas_rozp, czas_konc
 FROM zajecia
 WHERE semestr_id = %s
   AND sala_id = %s ORDER BY dzien, czas_rozp;
@@ -85,3 +85,16 @@ ORDER BY nazwisko, imie;
 
 --- action frekwencja-zajecia-data obecnosc
 SELECT dodaj_frekwencje(%s, %s, %s, %s::obecnosc);
+
+--- select uczniowie-srednie
+SELECT u.uczen_id, u.imie, u.nazwisko, AVG(so.srednia) AS _srednia
+FROM uczen u
+         FULL JOIN srednia_ocena_na_swiadectwie so ON u.uczen_id = so.uczen_id
+WHERE semestr_id = %s AND so.klasa_id = %s
+GROUP BY u.uczen_id
+ORDER BY AVG(so.srednia) DESC NULLS LAST, u.klasa_id, u.nazwisko;
+
+--- select oceny-ucznia
+SELECT nazwa AS _nazwa, srednia AS _srednia
+FROM srednia_ocena_na_swiadectwie so JOIN uczen u ON so.uczen_id = u.uczen_id
+WHERE semestr_id = %s AND so.uczen_id = %s;

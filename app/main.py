@@ -277,6 +277,8 @@ async def put_table_params_entity(
             except AssertionError:
                 if table == "plandla":
                     await put_table_entity("zajecia", entity, request)
+                elif table == "uczniowie-srednie":
+                    await put_table_entity("uczen", entity, request)
                 else:
                     assert False, f"Table {table} {action} not found"
             APP.db.commit()
@@ -293,6 +295,9 @@ async def post_table_params_entity(table: str, params: str, request: Request):
         if table == "plandla":
             request.state.semestr = params.split(",")[0]
             await post_table("zajecia", request)
+        elif table == "uczniowie-srednie":
+            request.state.klasa = params.split(",")[1]
+            await post_table("uczen", request)
         else:
             assert False, f"Table {table} not found"
         APP.db.commit()
@@ -367,6 +372,8 @@ async def post_table(table: str, request: Request):
     data = await request.json()
     if hasattr(request.state, "semestr"):
         data["semestr_id"] = request.state.semestr
+    if hasattr(request.state, "klasa"):
+        data["klasa_id"] = request.state.klasa
     keys = list(data.keys())
     values = list([data[k] for k in keys])
     with APP.db.cursor() as cursor:

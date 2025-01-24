@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>EDIT</title>
+    <link rel="stylesheet" href="main.css" />
+    <script type="module">
+      import {
+        SQLTable,
+        generateValuesOptionsCached,
+        table_to_columns,
+        table_to_index,
+        refill,
+      } from "./main.js";
+      const search_params = new URLSearchParams(window.location.search);
+      const semestr = search_params.get("semestr");
+      document.addEventListener("DOMContentLoaded", async () => {
+        const container = document.getElementById("table_container");
+        const klasa_name = document.getElementById("klasa_name");
+        klasa_name.replaceChildren(
+          ...(await generateValuesOptionsCached("klasa"))
+        );
+
+        klasa_name.addEventListener("change", async () => {
+          const url = `uczniowie-srednie/${semestr},${klasa_name.value}`;
+          const table = new SQLTable(
+            url,
+            [
+              ...table_to_columns["uczen"].filter((e) => e != "klasa_id"),
+              "_srednia",
+              "__oceny",
+            ],
+            "uczen_id"
+          );
+          window.sqltable = table;
+          container.replaceChildren();
+          container.appendChild(table.tableElement);
+          await table.refresh();
+        });
+        klasa_name.dispatchEvent(new Event("change"));
+        klasa_name.focus();
+      });
+      document.getElementById("refill").addEventListener("click", refill);
+    </script>
+  </head>
+
+  <body>
+    <div style="display: flex; justify-content: space-between">
+      <a href="index.html">WRÓĆ</a>
+      <div class="debug">
+        <a id="refill">REFILL</a>
+      </div>
+    </div>
+    <div>
+      Uczniowie klasy
+      <select id="klasa_name"></select>
+    </div>
+    (kliknij dwukrotnie na element by go edytować oraz kilknij enter by
+    zatwierdzić)
+    <br />
+    <br />
+    <div id="table_container"></div>
+  </body>
+</html>
