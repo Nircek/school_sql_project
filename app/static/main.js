@@ -37,7 +37,9 @@ export async function getPrettyName(table, obj) {
         obj.czas_rozp,
       ].join(" "),
     platnosc: async () =>
-      `${await getPrettyNameById("klasa", obj.klasa_id)} ${obj.tytul}`,
+      `${await getPrettyNameById("klasa", obj.klasa_id)} ${obj.tytul} ${
+        obj.kwota
+      }`,
   };
   if (table in prettierObj) return await prettierObj[table]();
   throw new Error(`No pretty name for table ${table}`);
@@ -55,7 +57,6 @@ export async function getPrettyNameById(table, id) {
     getPrettyNameByIdCache[table] = getPrettyNameByIdTable(table);
   }
   let table_rows = await getPrettyNameByIdCache[table];
-  console.log(table_rows);
   const find = (id) => table_rows.find((obj) => obj[`${table}_id`] == id);
   if (find(id) === undefined) {
     getPrettyNameByIdCache[table] = getPrettyNameByIdTable(table);
@@ -106,7 +107,7 @@ export class SQLTable {
       console.error(e);
     }
     await this.refresh();
-    this.addElement.querySelector("input:not([disabled])").focus();
+    this.addElement.querySelector("input").focus();
   }
 
   createRefreshButton() {
@@ -130,16 +131,25 @@ export class SQLTable {
     return button;
   }
 
+  createActionButton(redirectUrl) {
+    const button = document.createElement("button");
+    button.textContent = "\u2933";
+    button.addEventListener("click", () => {
+      window.location.href = redirectUrl;
+    });
+    return button;
+  }
+
   async handleAdd() {
     await this.addRow(this.prepareNewData());
   }
 
   prepareNewData() {
-    const data = Array.from(this.addElement.querySelectorAll("input,select"))
-      .filter((input) => input.disabled === false)
-      .map((input) => input.value);
+    const data = Array.from(
+      this.addElement.querySelectorAll("input,select")
+    ).map((input) => input.value);
     return this.columns
-      .filter((key, _) => key !== this.index)
+      .filter((key, _) => key !== this.index && !key.startsWith("_"))
       .reduce((acc, key, index) => {
         acc[key] = data[index];
         return acc;
@@ -191,7 +201,13 @@ export class SQLTable {
 
   async generateTableCellElement(row, col) {
     const td = document.createElement("td");
-    if (
+    if (col.startsWith("_")) {
+      if (col.startsWith("__")) {
+        td.classList.add("center");
+        const url = `${col.slice(2)}_${this.index}.html?id=${row[this.index]}`;
+        td.appendChild(this.createActionButton(url));
+      } else td.textContent = row[col];
+    } else if (
       !(
         (col !== this.index && col.endsWith("_id")) ||
         custom_fk_mapping[`${this.name}:${col}`] !== undefined
@@ -242,7 +258,8 @@ export class SQLTable {
     });
     if (
       key === this.index ||
-      (Array.isArray(this.index) && this.index.includes(key))
+      (Array.isArray(this.index) && this.index.includes(key)) ||
+      this.columns.some((col) => col.startsWith("_"))
     ) {
       await this.refresh();
     }
@@ -255,15 +272,22 @@ export class SQLTable {
       ...(await Promise.all(
         this.columns.map(async (col) => {
           const td = document.createElement("td");
+          if (col.startsWith("_")) {
+            td.textContent = "_";
+            return td;
+          }
           if (
             !(
               (col !== this.index && col.endsWith("_id")) ||
               custom_fk_mapping[`${this.name}:${col}`] !== undefined
             )
           ) {
+            if (col === this.index) {
+              td.textContent = "_";
+              return td;
+            }
             const input = document.createElement("input");
             input.setAttribute("type", "text");
-            if (col === this.index) input.disabled = true;
             input.addEventListener("keydown", (ev) => {
               if (ev.key === "Enter") this.handleAdd();
             });
@@ -285,7 +309,7 @@ export class SQLTable {
     this.tableElement.replaceChildren();
     const data = await this.getRows();
 
-    if (data.length !== 0 && !isSetsEqual(Object.keys(data[0]), this.columns)) {
+    if (data.length !== 0 && !isSetsEqual(Object.keys(data[0]), this.columns.filter((col) => !col.startsWith("__")))) {
       console.error("Columns mismatch");
       console.error(Object.keys(data[0]));
       console.error(this.columns);
@@ -385,4 +409,22 @@ export async function dbRefill() {
   await apiRequest("/setup_db.html", { method: "POST" });
   await apiRequest("/api/debug/db_init", { method: "POST" });
   await apiRequest("/api/debug/db_fill", { method: "POST" });
+}
+
+export async function refill(e) {
+  try {
+    e.target.textContent = "WAIT";
+    await dbRefill();
+    e.target.textContent = "DONE";
+  } catch (e) {
+    console.error(e);
+    e.target.textContent = "ERROR";
+  }
+  try {
+    await window.sqltable.refresh();
+  } catch (e) {
+    console.error(e);
+  }
+  await new Promise((resolve) => setTimeout(resolve, 1000));
+  e.target.textContent = "REFILL";
 }

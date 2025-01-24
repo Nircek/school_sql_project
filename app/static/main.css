@@ -19,6 +19,10 @@ td {
   text-align: left;
 }
 
+.center {
+  text-align: center;
+}
+
 th {
   background-color: #f2f2f2;
 }

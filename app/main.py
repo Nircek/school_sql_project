@@ -74,10 +74,12 @@ def select_schema():
                 "ocena",
                 "platnosc",
                 "zaplata",
+                "postep_platnosci",
             ]
             APP.db_table_pks = {
                 "frekwencja": ("zajecia_id", "data", "uczen_id"),
                 "zaplata": ("platnosc_id", "uczen_id"),
+                "postep_platnosci": ("platnosc_id",)
             }
             APP.db_ordering = {
                 "nauczyciel": ("nazwisko", "imie", "nauczyciel_id"),
@@ -95,6 +97,7 @@ def select_schema():
                 "frekwencja": ("zajecia_id", "data", "uczen_id"),
                 "ocena": ("zajecia_id", "uczen_id"),
                 "platnosc": ("klasa_id", "tytul", "platnosc_id"),
+                "postep_platnosci": ("klasa_id", "tytul", "platnosc_id"),
                 "zaplata": ("platnosc_id", "uczen_id"),
             }
 
@@ -188,8 +191,14 @@ def debug_error():
 def debug_sql_init():
     """Initialize the database"""
     with APP.db.cursor() as cursor:
-        cursor.execute(get_sql_commands("init.sql"))
-        cursor.execute(get_sql_commands("functions.sql"))
+        stages = [
+            "init",
+            "views",
+            "triggers",
+            # "functions",
+            ]
+        for file in stages:
+            cursor.execute(get_sql_commands(f"{file}.sql"))
         APP.db.commit()
     select_schema()
     return {"status": "ok"}

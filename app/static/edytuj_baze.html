@@ -11,12 +11,11 @@
         generateTableOptions,
         table_to_columns,
         table_to_index,
-        dbRefill,
+        refill,
       } from "./main.js";
       document.addEventListener("DOMContentLoaded", async () => {
-        const requested_table = new URLSearchParams(window.location.search).get(
-          "table"
-        );
+        const search_params = new URLSearchParams(window.location.search);
+        const requested_table = search_params.get("table");
         const table_name = document.getElementById("table_name");
         table_name.replaceChildren(...generateTableOptions());
         if (requested_table) table_name.value = requested_table;
@@ -36,23 +35,6 @@
         table_name.dispatchEvent(new Event("change"));
         table_name.focus();
       });
-      async function refill(e) {
-        try {
-          e.target.textContent = "WAIT";
-          await dbRefill();
-          e.target.textContent = "DONE";
-        } catch (e) {
-          console.error(e);
-          e.target.textContent = "ERROR";
-        }
-        try {
-          await window.sqltable.refresh();
-        } catch (e) {
-          console.error(e);
-        }
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-        e.target.textContent = "REFILL";
-      }
       document.getElementById("refill").addEventListener("click", refill);
     </script>
   </head>
