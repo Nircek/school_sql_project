@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>EDIT</title>
+    <link rel="stylesheet" href="main.css" />
+    <script type="module">
+      import {
+        SQLTable,
+        generateValuesOptionsCached,
+        table_to_columns,
+        table_to_index,
+        refill,
+      } from "./main.js";
+      const search_params = new URLSearchParams(window.location.search);
+      const semestr = search_params.get("semestr");
+      async function requestNewTable(container, name, value) {
+        const url = `plandla_${filter_name.value}/${semestr},${filter_value.value}`;
+        const table = new SQLTable(
+          url,
+          [
+            ...table_to_columns["zajecia"].filter((e) => e != "semestr_id"),
+            "__frekwencja",
+          ],
+          "zajecia_id"
+        );
+        window.sqltable = table;
+        container.replaceChildren();
+        container.appendChild(table.tableElement);
+        await table.refresh();
+      }
+      document.addEventListener("DOMContentLoaded", async () => {
+        const container = document.getElementById("table_container");
+        const filter_name = document.getElementById("filter_name");
+        const filter_value = document.getElementById("filter_value");
+        filter_name.addEventListener("change", async () => {
+          const name = filter_name.value;
+          const value = filter_value.value;
+          const obj = {
+            nauczyciel: "nauczyciela",
+            klasa: "klasy",
+            sala: "sali",
+          };
+          const obiekty = await generateValuesOptionsCached(name);
+          filter_value.replaceChildren(
+            ...(obiekty.length == 0
+              ? [new Option(`Brak ${obj[name]}`, "")]
+              : obiekty)
+          );
+          filter_value.dispatchEvent(new Event("change"));
+        });
+        filter_value.addEventListener("change", async () => {
+          await requestNewTable(
+            container,
+            filter_name.value,
+            filter_value.value
+          );
+        });
+        filter_name.dispatchEvent(new Event("change"));
+        filter_name.focus();
+      });
+      document.getElementById("refill").addEventListener("click", refill);
+    </script>
+  </head>
+
+  <body>
+    <div style="display: flex; justify-content: space-between">
+      <a href="index.html">WRÓĆ</a>
+      <div class="debug">
+        <a id="refill">REFILL</a>
+      </div>
+    </div>
+    <div>
+      Plan
+      <select id="filter_name">
+        <option value="nauczyciel">nauczyciela</option>
+        <option value="klasa">klasy</option>
+        <option value="sala">sali</option></select
+      >:
+    </div>
+    <div>
+      <select id="filter_value"></select>
+    </div>
+    (kliknij dwukrotnie na element by go edytować oraz kilknij enter by
+    zatwierdzić)
+    <br />
+    <br />
+    <div id="table_container"></div>
+  </body>
+</html>

@@ -62,6 +62,8 @@ a:hover {
   margin: 1em;
 }
 
-#table_name {
+#table_name,
+#filter_name,
+#filter_value {
   margin-bottom: 0.5em;
 }

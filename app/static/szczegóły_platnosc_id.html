@@ -17,7 +17,7 @@
         const search_params = new URLSearchParams(window.location.search);
         const container = document.getElementById("table_container");
         const table = new SQLTable(
-          `wplaty_uczniow/${search_params.get("id")}`,
+          `wplaty-uczniow/${search_params.get("id")}`,
           ["uczen_id", "imie", "nazwisko", "_wplacone", "dopłata_"],
           "uczen_id"
         );

@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>EDIT</title>
+    <link rel="stylesheet" href="main.css" />
+    <script type="module">
+      import {
+        SQLTable,
+        generateTableOptions,
+        table_to_columns,
+        table_to_index,
+        refill,
+        getDaysForZajeciaOptions,
+      } from "./main.js";
+      document.addEventListener("DOMContentLoaded", async () => {
+        const search_params = new URLSearchParams(window.location.search);
+        const zajecia_id = search_params.get("id");
+        const zajecia_date = document.getElementById("zajecia_date");
+        zajecia_date.replaceChildren(
+          ...(await getDaysForZajeciaOptions(zajecia_id))
+        );
+        zajecia_date.addEventListener("change", async (event) => {
+          const container = document.getElementById("table_container");
+          const table = new SQLTable(
+            `frekwencja-zajecia-data/${zajecia_id},${event.target.value}`,
+            ["uczen_id", "imie", "nazwisko", "obecnosc", "___"],
+            "uczen_id"
+          );
+          window.sqltable = table;
+          container.replaceChildren();
+          container.appendChild(table.tableElement);
+          await table.refresh();
+        });
+        zajecia_date.dispatchEvent(new Event("change"));
+        zajecia_date.focus();
+      });
+      document.getElementById("refill").addEventListener("click", refill);
+    </script>
+  </head>
+
+  <body>
+    <div style="display: flex; justify-content: space-between">
+      <a href="javascript:history.back()">WRÓĆ</a>
+      <div class="debug">
+        <a id="refill">REFILL</a>
+      </div>
+    </div>
+    <div>
+      Tabela:
+      <select id="zajecia_date"></select>
+    </div>
+    (kliknij dwukrotnie na element by go edytować oraz kilknij enter by
+    zatwierdzić)
+    <br />
+    <br />
+    <div id="table_container"></div>
+  </body>
+</html>

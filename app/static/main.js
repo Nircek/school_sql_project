@@ -161,11 +161,13 @@ export class SQLTable {
     const btn = document.createElement("th");
     btn.appendChild(this.createRefreshButton());
     thead.replaceChildren(
-      ...this.columns.map((key) => {
-        const th = document.createElement("th");
-        th.textContent = key;
-        return th;
-      }),
+      ...this.columns
+        .filter((k) => k !== "___")
+        .map((key) => {
+          const th = document.createElement("th");
+          th.textContent = key;
+          return th;
+        }),
       btn
     );
     return thead;
@@ -191,9 +193,9 @@ export class SQLTable {
           btn.appendChild(this.createDeleteButton(this.getId(row)));
         tr.replaceChildren(
           ...(await Promise.all(
-            this.columns.map(
-              async (col) => await this.generateTableCellElement(row, col)
-            )
+            this.columns
+              .filter((k) => k !== "___")
+              .map(async (col) => await this.generateTableCellElement(row, col))
           )),
           btn
         );
@@ -283,35 +285,37 @@ export class SQLTable {
     btn.appendChild(this.createAddButton());
     this.addElement.replaceChildren(
       ...(await Promise.all(
-        this.columns.map(async (col) => {
-          const td = document.createElement("td");
-          if (col.startsWith("_")) {
-            td.textContent = "_";
-            return td;
-          }
-          if (
-            !(
-              (col !== this.index && col.endsWith("_id")) ||
-              custom_fk_mapping[`${this.name}:${col}`] !== undefined
-            )
-          ) {
-            if (col === this.index) {
+        this.columns
+          .filter((k) => k !== "___")
+          .map(async (col) => {
+            const td = document.createElement("td");
+            if (col.startsWith("_")) {
               td.textContent = "_";
               return td;
             }
-            const input = document.createElement("input");
-            input.setAttribute("type", "text");
-            input.addEventListener("keydown", (ev) => {
-              if (ev.key === "Enter") this.handleAdd();
-            });
-            td.appendChild(input);
-          } else {
-            const table =
-              custom_fk_mapping[`${this.name}:${col}`] || col.slice(0, -3);
-            td.appendChild(await generateValuesElement(table));
-          }
-          return td;
-        })
+            if (
+              !(
+                (col !== this.index && col.endsWith("_id")) ||
+                custom_fk_mapping[`${this.name}:${col}`] !== undefined
+              )
+            ) {
+              if (col === this.index) {
+                td.textContent = "_";
+                return td;
+              }
+              const input = document.createElement("input");
+              input.setAttribute("type", "text");
+              input.addEventListener("keydown", (ev) => {
+                if (ev.key === "Enter") this.handleAdd();
+              });
+              td.appendChild(input);
+            } else {
+              const table =
+                custom_fk_mapping[`${this.name}:${col}`] || col.slice(0, -3);
+              td.appendChild(await generateValuesElement(table));
+            }
+            return td;
+          })
       )),
       btn
     );
@@ -430,6 +434,11 @@ export async function dbRefill() {
   await apiRequest("/setup_db.html", { method: "POST" });
   await apiRequest("/api/debug/db_init", { method: "POST" });
   await apiRequest("/api/debug/db_fill", { method: "POST" });
+}
+
+export async function getDaysForZajeciaOptions(zajecia) {
+  const response = await apiRequest(`/api/db/dow/${zajecia}`);
+  return (await response.json()).map((obj) => new Option(obj.date));
 }
 
 export async function refill(e) {

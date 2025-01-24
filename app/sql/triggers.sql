@@ -29,6 +29,7 @@ BEGIN
     IF EXISTS (SELECT 1
                FROM zajecia
                WHERE new.dzien = dzien
+                 AND new.zajecia_id <> zajecia_id
                  AND new.czas_rozp < czas_konc
                  AND new.czas_konc > czas_rozp
                  AND new.sala_id = sala_id
@@ -40,6 +41,7 @@ BEGIN
     IF EXISTS (SELECT 1
                FROM zajecia
                WHERE new.dzien = dzien
+                 AND new.zajecia_id <> zajecia_id
                  AND new.czas_rozp < czas_konc
                  AND new.czas_konc > czas_rozp
                  AND new.klasa_id = klasa_id
@@ -51,6 +53,7 @@ BEGIN
     IF EXISTS (SELECT 1
                FROM zajecia
                WHERE new.dzien = dzien
+                 AND new.zajecia_id <> zajecia_id
                  AND new.czas_rozp < czas_konc
                  AND new.czas_konc > czas_rozp
                  AND new.nauczyciel_id = nauczyciel_id
@@ -370,55 +373,59 @@ EXECUTE FUNCTION zmiana_dat_semestru();
 -- views triggers
 
 CREATE OR REPLACE FUNCTION insert_into_postep_platnosci()
-RETURNS TRIGGER AS
+    RETURNS trigger AS
 $$
 BEGIN
     INSERT INTO platnosc (klasa_id, tytul, opis, kwota, termin, kategoria)
-    VALUES (NEW.klasa_id, NEW.tytul, NEW.opis, NEW.kwota, NEW.termin, NEW.kategoria);
+    VALUES (new.klasa_id, new.tytul, new.opis, new.kwota, new.termin, new.kategoria);
     RETURN NULL;
 END;
 $$
-LANGUAGE plpgsql;
+    LANGUAGE plpgsql;
 
 CREATE OR REPLACE FUNCTION update_postep_platnosci()
-RETURNS TRIGGER AS
+    RETURNS trigger AS
 $$
 BEGIN
     UPDATE platnosc
-    SET klasa_id = NEW.klasa_id,
-        tytul = NEW.tytul,
-        opis = NEW.opis,
-        kwota = NEW.kwota,
-        termin = NEW.termin,
-        kategoria = NEW.kategoria
-    WHERE platnosc_id = NEW.platnosc_id;
+    SET klasa_id  = new.klasa_id,
+        tytul     = new.tytul,
+        opis      = new.opis,
+        kwota     = new.kwota,
+        termin    = new.termin,
+        kategoria = new.kategoria
+    WHERE platnosc_id = new.platnosc_id;
     RETURN NULL;
 END;
 $$
-LANGUAGE plpgsql;
+    LANGUAGE plpgsql;
 
 CREATE OR REPLACE FUNCTION delete_postep_platnosci()
-RETURNS TRIGGER AS
+    RETURNS trigger AS
 $$
 BEGIN
-    DELETE FROM platnosc
-    WHERE platnosc_id = OLD.platnosc_id;
+    DELETE
+    FROM platnosc
+    WHERE platnosc_id = old.platnosc_id;
     RETURN NULL;
 END;
 $$
-LANGUAGE plpgsql;
+    LANGUAGE plpgsql;
 
 CREATE TRIGGER insert_into_postep_platnosci
-    INSTEAD OF INSERT ON postep_platnosci
+    INSTEAD OF INSERT
+    ON postep_platnosci
     FOR EACH ROW
-    EXECUTE FUNCTION insert_into_postep_platnosci();
+EXECUTE FUNCTION insert_into_postep_platnosci();
 
 CREATE TRIGGER update_postep_platnosci
-    INSTEAD OF UPDATE ON postep_platnosci
+    INSTEAD OF UPDATE
+    ON postep_platnosci
     FOR EACH ROW
-    EXECUTE FUNCTION update_postep_platnosci();
+EXECUTE FUNCTION update_postep_platnosci();
 
 CREATE TRIGGER delete_postep_platnosci
-    INSTEAD OF DELETE ON postep_platnosci
+    INSTEAD OF DELETE
+    ON postep_platnosci
     FOR EACH ROW
-    EXECUTE FUNCTION delete_postep_platnosci();
+EXECUTE FUNCTION delete_postep_platnosci();

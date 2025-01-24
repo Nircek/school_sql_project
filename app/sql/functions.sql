@@ -33,3 +33,13 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+CREATE OR REPLACE FUNCTION dodaj_frekwencje(_zajecia_id int, _data date, _uczen_id int, _obecnosc obecnosc)
+    RETURNS void AS
+$$
+BEGIN
+    INSERT INTO frekwencja (zajecia_id, data, uczen_id, obecnosc)
+    VALUES (_zajecia_id, _data, _uczen_id, _obecnosc)
+    ON CONFLICT (zajecia_id, data, uczen_id)
+        DO UPDATE SET obecnosc = _obecnosc;
+END;
+$$ LANGUAGE plpgsql;

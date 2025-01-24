@@ -79,7 +79,7 @@ def select_schema():
             APP.db_table_pks = {
                 "frekwencja": ("zajecia_id", "data", "uczen_id"),
                 "zaplata": ("platnosc_id", "uczen_id"),
-                "postep_platnosci": ("platnosc_id",)
+                "postep_platnosci": ("platnosc_id",),
             }
             APP.db_ordering = {
                 "nauczyciel": ("nazwisko", "imie", "nauczyciel_id"),
@@ -196,7 +196,7 @@ def debug_sql_init():
             "views",
             "triggers",
             "functions",
-            ]
+        ]
         for file in stages:
             cursor.execute(get_sql_commands(f"{file}.sql"))
         APP.db.commit()
@@ -235,6 +235,18 @@ def table_not_found(table):
         content={"error": f"Table {table} not found"},
     )
 
+
+@API_APP.get("/db/dow/{zajecia}")
+def get_dow(zajecia: str):
+    """Return all rows from a virtual table that is a result of a query"""
+    with APP.db.cursor() as cursor:
+        cursor.execute(
+            sql.SQL(get_sql_commands("utils.sql", "get all dates for zajecia")),
+            [zajecia],
+        )
+        return cursor.fetchall()
+
+
 @API_APP.get("/db/{table}/{params}")
 def get_table_params(table: str, params: str):
     """Return all rows from a virtual table that is a result of a query"""
@@ -247,21 +259,63 @@ def get_table_params(table: str, params: str):
 
 
 @API_APP.put("/db/{table}/{params}/{entity}")
-async def put_table_params_entity(table: str, params: str, entity: str, request: Request):
+async def put_table_params_entity(
+    table: str, params: str, entity: str, request: Request
+):
     """Update a row in a virtual table that is a result of a query"""
     data = await request.json()
+    table = table.split("_")[0]
     assert len(data.keys()) == 1, "Only one column can be updated"
     action, value = list(data.items())[0]
     with APP.db.cursor() as cursor:
         try:
+            try:
+                cursor.execute(
+                    get_sql_commands("utils.sql", f"action {table} {action}"),
+                    [*params.split(","), *entity.split(","), value],
+                )
+            except AssertionError:
+                if table == "plandla":
+                    await put_table_entity("zajecia", entity, request)
+                else:
+                    assert False, f"Table {table} {action} not found"
+            APP.db.commit()
+        except psycopg.errors.Error as e:
+            APP.db.rollback()
+            raise e
+
+
+@API_APP.post("/db/{table}/{params}")
+async def post_table_params_entity(table: str, params: str, request: Request):
+    """Insert a new row into a virtual table that is a result of a query"""
+    table = table.split("_")[0]
+    try:
+        if table == "plandla":
+            request.state.semestr = params.split(",")[0]
+            await post_table("zajecia", request)
+        else:
+            assert False, f"Table {table} not found"
+        APP.db.commit()
+    except psycopg.errors.Error as e:
+        APP.db.rollback()
+        raise e
+
+
+@API_APP.delete("/db/{table}/{params}/{entity}")
+def delete_table_params_entity(table: str, params: str, entity: str):
+    """Delete a row from a virtual table that is a result of a query"""
+    table = table.split("_")[0]
+    with APP.db.cursor() as cursor:
+        try:
             cursor.execute(
-                sql.SQL(get_sql_commands("utils.sql", f"action {table} {action}")),
-                [*params.split(","), *entity.split(","), value],
+                sql.SQL(get_sql_commands("utils.sql", f"delete {table}")),
+                [*params.split(","), *entity.split(",")],
             )
             APP.db.commit()
         except psycopg.errors.Error as e:
             APP.db.rollback()
             raise e
+
 
 @API_APP.get("/db/{table}")
 def get_table(table: str):
@@ -311,6 +365,8 @@ async def post_table(table: str, request: Request):
     if table not in APP.db_tables:
         return table_not_found(table)
     data = await request.json()
+    if hasattr(request.state, "semestr"):
+        data["semestr_id"] = request.state.semestr
     keys = list(data.keys())
     values = list([data[k] for k in keys])
     with APP.db.cursor() as cursor:

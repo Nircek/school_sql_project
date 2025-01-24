@@ -216,7 +216,7 @@ VALUES (1, 1, 5, '2024-09-02', 'zadanie 1'),
        (8, 49, 1, '2024-09-03', 'zadanie 1');
 
 INSERT INTO frekwencja (zajecia_id, data, uczen_id, obecnosc)
-VALUES (1, '2024-09-02', 1, 'ob'),
+VALUES (1, '2024-09-02', 1, 'nb'),
        (1, '2024-09-02', 2, 'ob'),
        (1, '2024-09-02', 3, 'ob'),
        (1, '2024-09-02', 4, 'ob'),
