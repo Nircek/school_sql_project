@@ -379,3 +379,10 @@ export async function generateValuesElement(table, value) {
   if (value !== undefined) select.value = value;
   return select;
 }
+
+export async function dbRefill() {
+  await apiRequest("/api/debug/db_drop", { method: "POST" });
+  await apiRequest("/setup_db.html", { method: "POST" });
+  await apiRequest("/api/debug/db_init", { method: "POST" });
+  await apiRequest("/api/debug/db_fill", { method: "POST" });
+}

@@ -189,6 +189,7 @@ def debug_sql_init():
     """Initialize the database"""
     with APP.db.cursor() as cursor:
         cursor.execute(get_sql_commands("init.sql"))
+        cursor.execute(get_sql_commands("functions.sql"))
         APP.db.commit()
     select_schema()
     return {"status": "ok"}

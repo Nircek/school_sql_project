@@ -11,6 +11,7 @@
         generateTableOptions,
         table_to_columns,
         table_to_index,
+        dbRefill,
       } from "./main.js";
       document.addEventListener("DOMContentLoaded", async () => {
         const requested_table = new URLSearchParams(window.location.search).get(
@@ -26,18 +27,43 @@
             table_to_columns[event.target.value],
             table_to_index[event.target.value]
           );
+          window.sqltable = table;
           container.replaceChildren();
           container.appendChild(table.tableElement);
+          history.pushState({}, "", `?table=${event.target.value}`);
           await table.refresh();
         });
         table_name.dispatchEvent(new Event("change"));
         table_name.focus();
       });
+      async function refill(e) {
+        try {
+          e.target.textContent = "WAIT";
+          await dbRefill();
+          e.target.textContent = "DONE";
+        } catch (e) {
+          console.error(e);
+          e.target.textContent = "ERROR";
+        }
+        try {
+          await window.sqltable.refresh();
+        } catch (e) {
+          console.error(e);
+        }
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+        e.target.textContent = "REFILL";
+      }
+      document.getElementById("refill").addEventListener("click", refill);
     </script>
   </head>
 
   <body>
-    <a href="index.html">WRÓĆ</a>
+    <div style="display: flex; justify-content: space-between">
+      <a href="index.html">WRÓĆ</a>
+      <div class="debug">
+        <a id="refill">REFILL</a>
+      </div>
+    </div>
     <div>
       Tabela:
       <select id="table_name">

@@ -49,16 +49,20 @@
         await apiRequest(url, { method: "POST" });
         window.alert("Udało się!");
       }
-      window.postRequest = postRequest;
+      async function postDebug(id) {
+        await postRequest(`/api/debug/db_${id}`);
+        location.reload();
+      }
+      window.postDebug = postDebug;
     </script>
   </head>
 
   <body>
     <h1>System zarządzania szkołą</h1>
     <div class="debug">
-      <a href="javascript:postRequest('/api/debug/db_drop').then(e=>location.reload());">DROP</a>
-      <a href="javascript:postRequest('/api/debug/db_init').then(e=>location.reload());">INIT</a>
-      <a href="javascript:postRequest('/api/debug/db_fill').then(e=>location.reload());">FILL</a>
+      <a href="javascript:postDebug('drop');">DROP</a>
+      <a href="javascript:postDebug('init');">INIT</a>
+      <a href="javascript:postDebug('fill');">FILL</a>
       <a href="edytuj_baze.html">EDIT</a>
     </div>
     <div class="container">

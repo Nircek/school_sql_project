@@ -1,4 +1,4 @@
-INSERT INTO "nauczyciel" ("imie", "nazwisko")
+INSERT INTO nauczyciel (imie, nazwisko)
 VALUES ('Jan', 'Matematyk'),
        ('Anna', 'Polonistka'),
        ('Piotr', 'Fizyk'),
@@ -8,7 +8,7 @@ VALUES ('Jan', 'Matematyk'),
        ('Michał', 'Historyk');
 
 
-INSERT INTO "klasa" ("nazwa", "wychowawca")
+INSERT INTO klasa (nazwa, wychowawca)
 VALUES ('1A', 2),
        ('1B', 4),
        ('2A', 3),
@@ -17,7 +17,7 @@ VALUES ('1A', 2),
        ('3B', 5),
        ('3C', 6);
 
-INSERT INTO "uczen" ("imie", "nazwisko", "klasa_id")
+INSERT INTO uczen (imie, nazwisko, klasa_id)
 VALUES ('Jan', 'Kowalski', 1),
        ('Anna', 'Nowak', 1),
        ('Piotr', 'Wiśniewski', 1),
@@ -68,7 +68,7 @@ VALUES ('Jan', 'Kowalski', 1),
        ('Agnieszka', 'Krupa', 7),
        ('Michał', 'Kaczor', 7);
 
-INSERT INTO "sala" ("nazwa")
+INSERT INTO sala (nazwa)
 VALUES ('101'),
        ('102'),
        ('103'),
@@ -80,11 +80,11 @@ VALUES ('101'),
        ('109'),
        ('110');
 
-INSERT INTO "semestr" ("data_poczatku", "data_konca")
+INSERT INTO semestr (data_poczatku, data_konca)
 VALUES ('2024-09-01', '2025-01-19'),
        ('2025-02-03', '2025-06-27');
 
-INSERT INTO "zajecia" ("sala_id", "klasa_id", "nauczyciel_id", "semestr_id", "dzien", "czas_rozp", "czas_konc")
+INSERT INTO zajecia (sala_id, klasa_id, nauczyciel_id, semestr_id, dzien, czas_rozp, czas_konc)
 VALUES (1, 1, 5, 1, 'pn', '08:00', '09:30'),
        (2, 7, 3, 1, 'pn', '09:45', '11:15'),
        (3, 5, 5, 1, 'pn', '11:30', '13:00'),
@@ -156,7 +156,7 @@ VALUES (1, 1, 5, 1, 'pn', '08:00', '09:30'),
        (9, 3, 6, 2, 'pt', '16:45', '18:15'),
        (10, 1, 1, 2, 'pt', '18:30', '20:00');
 
-INSERT INTO "ocena" ("zajecia_id", "uczen_id", "ocena", "data", "komentarz")
+INSERT INTO ocena (zajecia_id, uczen_id, ocena, data, komentarz)
 VALUES (1, 1, 5, '2024-09-02', 'zadanie 1'),
        (1, 1, 1, '2024-09-02', 'zadanie domowe 1'),
        (1, 2, 4, '2024-09-02', 'zadanie 1'),
@@ -215,7 +215,7 @@ VALUES (1, 1, 5, '2024-09-02', 'zadanie 1'),
        (8, 48, 4, '2024-09-03', 'zadanie 1'),
        (8, 49, 1, '2024-09-03', 'zadanie 1');
 
-INSERT INTO "frekwencja" ("zajecia_id", "data", "uczen_id", "obecnosc")
+INSERT INTO frekwencja (zajecia_id, data, uczen_id, obecnosc)
 VALUES (1, '2024-09-02', 1, 'ob'),
        (1, '2024-09-02', 2, 'ob'),
        (1, '2024-09-02', 3, 'ob'),
@@ -274,7 +274,7 @@ VALUES (1, '2024-09-02', 1, 'ob'),
        (8, '2024-09-03', 49, 'ob'),
        (9, '2024-09-03', 43, 'ob');
 
-INSERT INTO "platnosc" ("klasa_id", "tytul", "opis", "kwota", "termin", "kategoria")
+INSERT INTO platnosc (klasa_id, tytul, opis, kwota, termin, kategoria)
 VALUES (1, 'kartki na kartkówki', '', 100, '2024-09-14', 'kartki'),
        (2, 'kartki na kartkówki', '', 100, '2024-09-14', 'kartki'),
        (3, 'kartki na kartkówki', '', 100, '2024-09-14', 'kartki'),
@@ -284,7 +284,7 @@ VALUES (1, 'kartki na kartkówki', '', 100, '2024-09-14', 'kartki'),
        (7, 'kartki na kartkówki', '', 100, '2024-09-14', 'kartki'),
        (1, 'wywieczka do Paryża', '', 1000, '2024-12-31', 'wycieczki');
 
-INSERT INTO "zaplata" ("platnosc_id", "uczen_id", "kwota")
+INSERT INTO zaplata (platnosc_id, uczen_id, kwota)
 VALUES (1, 1, 100),
        (1, 2, 100),
        (1, 3, 50),

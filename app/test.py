@@ -40,12 +40,12 @@ def test():
     response = url("/")
     assert "/setup_db.html" in response.url
     assert (
-        response.text.find("'/setup_db.html', { method: 'POST' }") != -1
+        response.text.find('"/setup_db.html", { method: "POST" }') != -1
     ), response.text
     assert url("/setup_db.html", "POST").ok
     response = url("/")
     assert (
-        response.text.find("'/setup_db.html', { method: 'POST' }") == -1
+        response.text.find('"/setup_db.html", { method: "POST" }') == -1
     ), response.text
 
     assert_response(
