@@ -98,3 +98,31 @@ ORDER BY AVG(so.srednia) DESC NULLS LAST, u.klasa_id, u.nazwisko;
 SELECT nazwa AS _nazwa, srednia AS _srednia
 FROM srednia_ocena_na_swiadectwie so JOIN uczen u ON so.uczen_id = u.uczen_id
 WHERE semestr_id = %s AND so.uczen_id = %s;
+
+--- select mniej_niz_trzy_oceny
+WITH cte AS (SELECT z.zajecia_id, COUNT(o.ocena) AS ilosc_ocen
+             FROM ocena o
+                      FULL JOIN zajecia z ON o.zajecia_id = z.zajecia_id
+             WHERE z.semestr_id = %s
+             GROUP BY z.zajecia_id, z.nauczyciel_id, o.uczen_id
+             HAVING COUNT(o.ocena) < 3)
+SELECT z.zajecia_id, MIN(ilosc_ocen) AS min_ilosc_ocen
+FROM cte c
+         JOIN zajecia z ON c.zajecia_id = z.zajecia_id
+GROUP BY z.zajecia_id
+ORDER BY z.zajecia_id;
+
+--- select oblani
+SELECT uczen_id, COUNT(*) AS liczba_oblanych
+FROM srednia_ocena_na_swiadectwie so
+WHERE srednia < 2
+  AND semestr_id = %s
+GROUP BY klasa_id, uczen_id;
+
+--- select wybitni
+SELECT uczen_id, AVG(srednia)
+FROM srednia_ocena_na_swiadectwie so
+WHERE semestr_id = %s
+GROUP BY uczen_id
+ORDER BY AVG(srednia) DESC NULLS LAST
+LIMIT 10;

@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>EDIT</title>
+    <link rel="stylesheet" href="main.css" />
+    <script type="module">
+      import {
+        SQLTable,
+        generateValuesOptionsCached,
+        table_to_columns,
+        table_to_index,
+        refill,
+      } from "./main.js";
+      const search_params = new URLSearchParams(window.location.search);
+      const semestr = search_params.get("semestr");
+      document.addEventListener("DOMContentLoaded", async () => {
+        const obj = {
+          mniej_niz_trzy_oceny: ["zajecia_id", "min_ilosc_ocen"],
+          oblani: ["uczen_id", "liczba_oblanych"],
+          wybitni: ["uczen_id", "avg"],
+        };
+        for (const [i, e] of [
+          "mniej_niz_trzy_oceny",
+          "oblani",
+          "wybitni",
+        ].entries()) {
+          const container = document.getElementById(`table_container_${i+1}`);
+          const url = `${e}/${semestr}`;
+          const table = new SQLTable(url, [...obj[e], "___"]);
+          container.replaceChildren();
+          container.appendChild(table.tableElement);
+          await table.refresh();
+        }
+        document.getElementById("refill").addEventListener("click", refill);
+      });
+    </script>
+  </head>
+
+  <body>
+    <div style="display: flex; justify-content: space-between">
+      <a href="index.html">WRÓĆ</a>
+      <div class="debug">
+        <a id="refill">REFILL</a>
+      </div>
+    </div>
+    <br />
+    <br />
+    Przedmioty, w których istnieje uczeń mający mniej niż 3 oceny (musi ich nie
+    być by można było zamknąć semestr):
+    <div id="table_container_1"></div>
+    <br />
+    <br />
+    Osoby, które nie zdały:
+    <div id="table_container_2"></div>
+    <br />
+    <br />
+    Najlepsze 10 osób:
+    <div id="table_container_3"></div>
+  </body>
+</html>

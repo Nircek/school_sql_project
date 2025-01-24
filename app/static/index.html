@@ -13,9 +13,9 @@
         const semestry = await generateValuesOptions("semestr");
         wybor_semestru.replaceChildren(
           ...(semestry.length == 0
-            ? [new Option("Brak semestrów", "")]
+            ? [new Option("Brak semestrów (przyciski nie będą działać.)", "")]
             : semestry),
-          new Option("...Dodaj nowy...", "new")
+          // new Option("...Dodaj nowy...", "new")
         );
         wybor_semestru.addEventListener("change", async (event) => {
           const semestr = event.target.value;
@@ -31,18 +31,18 @@
         });
         wybor_semestru.dispatchEvent(new Event("change"));
 
-        const wybor_klasy = document.getElementById("wybor_klasy");
-        const klasy = await generateValuesOptions("klasa");
-        wybor_klasy.replaceChildren(
-          ...(klasy.length == 0 ? [new Option("Brak klas", "")] : klasy)
-        );
-        wybor_klasy.addEventListener("change", async (event) => {
-          const klasa = event.target.value;
-          document.querySelectorAll(".klasowe a").forEach((element) => {
-            element.href = `${element.href.split("?")[0]}?klasa=${klasa}`;
-          });
-        });
-        wybor_klasy.dispatchEvent(new Event("change"));
+        // const wybor_klasy = document.getElementById("wybor_klasy");
+        // const klasy = await generateValuesOptions("klasa");
+        // wybor_klasy.replaceChildren(
+        //   ...(klasy.length == 0 ? [new Option("Brak klas", "")] : klasy)
+        // );
+        // wybor_klasy.addEventListener("change", async (event) => {
+        //   const klasa = event.target.value;
+        //   document.querySelectorAll(".klasowe a").forEach((element) => {
+        //     element.href = `${element.href.split("?")[0]}?klasa=${klasa}`;
+        //   });
+        // });
+        // wybor_klasy.dispatchEvent(new Event("change"));
       });
 
       async function postRequest(url) {
@@ -61,7 +61,7 @@
     <h1>System zarządzania szkołą</h1>
     <div class="debug">
       <a href="javascript:postDebug('drop');">DROP</a>
-      <a href="javascript:postDebug('init');">INIT</a>
+      <a href="javascript:postDebug('init');">CLEAR</a>
       <a href="javascript:postDebug('fill');">FILL</a>
       <a href="edytuj_baze.html">EDIT</a>
     </div>
@@ -81,6 +81,7 @@
         </div>
         <a class="semestralny" href="plan.html">Plan</a>
         <a class="semestralny" href="uczniowie.html">Uczniowie</a>
+        <a class="semestralny" href="informacje.html">Informacje</a>
       </div>
     </div>
   </body>
